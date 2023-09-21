@@ -1,4 +1,4 @@
-package com.hana.sugang.course.domain.constant;
+package com.hana.sugang.api.course.domain.constant;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

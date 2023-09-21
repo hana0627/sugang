@@ -1,7 +1,7 @@
-package com.hana.sugang.course.domain;
+package com.hana.sugang.api.course.domain;
 
 
-import com.hana.sugang.course.domain.constant.CourseTypeConverter;
+import com.hana.sugang.api.course.domain.constant.CourseTypeConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
