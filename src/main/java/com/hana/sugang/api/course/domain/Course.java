@@ -1,10 +1,12 @@
 package com.hana.sugang.api.course.domain;
 
 
+import com.hana.sugang.api.course.domain.constant.CourseType;
 import com.hana.sugang.api.course.domain.constant.CourseTypeConverter;
 import com.hana.sugang.global.domain.AuditingFields;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -33,8 +35,23 @@ public class Course extends AuditingFields {
 
     @Convert(converter = CourseTypeConverter.class)
     @Column(nullable = false, length = 10)
-    private CascadeType courseType; //교양, 전공여부 //TODO Enum 타입으로 변경
+    private CourseType courseType; //교양, 전공여부
 
     private Integer score; // 학점
+
+
+
+
+    //
+    @Builder
+    public Course(String code, String title, String description, Integer maxCount, Integer currentCount, CourseType courseType, Integer score) {
+        this.code = code;
+        this.title = title;
+        this.description = description;
+        this.maxCount = maxCount;
+        this.currentCount = currentCount;
+        this.courseType = courseType;
+        this.score = score;
+    }
 
 }
