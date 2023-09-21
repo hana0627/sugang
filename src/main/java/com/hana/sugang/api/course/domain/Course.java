@@ -2,6 +2,7 @@ package com.hana.sugang.api.course.domain;
 
 
 import com.hana.sugang.api.course.domain.constant.CourseTypeConverter;
+import com.hana.sugang.global.domain.AuditingFields;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Course {
+public class Course extends AuditingFields {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
