@@ -1,6 +1,7 @@
 package com.hana.sugang.course.domain;
 
 
+import com.hana.sugang.course.domain.constant.CourseTypeConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -29,7 +30,9 @@ public class Course {
     private Integer currentCount;// 현재 수강신청 인원 수
 
 
-    private String courseType; //교양, 전공여부 //TODO Enum 타입으로 변경
+    @Convert(converter = CourseTypeConverter.class)
+    @Column(nullable = false, length = 10)
+    private CascadeType courseType; //교양, 전공여부 //TODO Enum 타입으로 변경
 
     private Integer score; // 학점
 
