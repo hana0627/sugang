@@ -11,22 +11,23 @@ public record CourseCreate(
         String title, // 강의명
         String description, // 강의설명
         Integer maxCount, // 최대 수강가능 인원 수 
-        CourseType courseType //전공, 교양 여부
+        CourseType courseType, //전공, 교양 여부
+        Integer score
 
 ) {
 
 
-    public static CourseCreate of(String code, String title, String description, Integer maxCount, CourseType courseType) {
-        return new CourseCreate(code, title, description, maxCount, courseType);
+    public static CourseCreate of(String code, String title, String description, Integer maxCount, CourseType courseType, Integer score) {
+        return new CourseCreate(code, title, description, maxCount, courseType, score);
     }
-
-    public Course toEntity(CourseCreate requestDto) {
+    public static Course toEntity(CourseCreate requestDto) {
         return Course.builder()
                 .code(requestDto.code)
                 .title(requestDto.title)
                 .description(requestDto.description)
                 .maxCount(requestDto.maxCount)
                 .courseType(requestDto.courseType)
+                .score(requestDto.score)
                 .build();
     }
 
