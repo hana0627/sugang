@@ -1,5 +1,6 @@
 package com.hana.sugang.api.member.domain;
 
+import com.hana.sugang.api.course.domain.constant.CourseTypeConverter;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.global.domain.AuditingFields;
 import jakarta.persistence.*;
@@ -29,6 +30,8 @@ public class Member  extends AuditingFields {
     @Column(length = 30)
     private String name; // 이름
 
+    @Convert(converter = CourseTypeConverter.class)
+    @Column(nullable = false, length = 10)
     private MemberType memberType;
 
     private Integer currentScore; // 현재 신청한 강의수
@@ -38,7 +41,7 @@ public class Member  extends AuditingFields {
     /**
      * 멤버엔티티는 상황에 따라서
      * 생성자로 들어오는 파라미터 수가 많거나.
-     * 추가되거나 변경될 필드가 많을것으로 예상되어 Builder패턴을 적용 - 이펙티브자바 Item 2
+     * 변경될 필드가 많을것으로 예상되어 Builder패턴을 적용 - 이펙티브자바 Item 2
      */
     @Builder
     public Member(Long id, String username, String password, String name, MemberType memberType, Integer currentScore, Integer maxScore) {
