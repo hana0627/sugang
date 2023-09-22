@@ -4,6 +4,7 @@ import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.service.CourseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,8 +24,7 @@ public class CourseController {
         return courseService.findOne(id);
     }
     @PostMapping("/course")
-    public Long createCourse(@RequestBody CourseCreate requestDto) {
-        System.out.println(requestDto);
+    public Long createCourse(@RequestBody @Validated CourseCreate requestDto) {
         return courseService.saveCourse(requestDto);
     }
 

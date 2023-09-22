@@ -5,6 +5,7 @@ import com.hana.sugang.api.course.domain.constant.CourseType;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.repository.CourseRepository;
+import com.hana.sugang.global.exception.CourseNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.List;
 
@@ -98,7 +100,7 @@ class CourseServiceTest {
 
 
     @Test
-//    @DisplayName("없는 Id로 조회하면 EntityNotFoundException이 발생한다.")
+    @DisplayName("없는 Id로 조회하면 예외가 발생한다.")
     void findOneError() {
         //given
         CourseCreate requestDto = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
@@ -106,7 +108,7 @@ class CourseServiceTest {
 
 
         //when && then
-        assertThrows(EntityNotFoundException.class, () -> {
+        assertThrows(CourseNotFoundException.class, () -> {
             courseService.findOne(9999L);
         });
 
@@ -134,8 +136,9 @@ class CourseServiceTest {
     }
 
 
-
-
+    // 테스트 케이스 작성시 실수한점
+    // 필드값에 대한 유효성 검사는 Controller 호출 이전에 수행.
+    // Controller 호출 이전이므로 당연히 ServiceTest에서는 유효성 검증 테스트 불가
 
 
 
