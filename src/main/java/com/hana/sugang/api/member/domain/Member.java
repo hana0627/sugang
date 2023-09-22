@@ -2,12 +2,14 @@ package com.hana.sugang.api.member.domain;
 
 import com.hana.sugang.api.course.domain.constant.CourseTypeConverter;
 import com.hana.sugang.api.member.domain.constant.MemberType;
+import com.hana.sugang.api.member.domain.constant.MemberTypeConverter;
 import com.hana.sugang.global.domain.AuditingFields;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
@@ -30,11 +32,14 @@ public class Member  extends AuditingFields {
     @Column(length = 30)
     private String name; // 이름
 
-    @Convert(converter = CourseTypeConverter.class)
-    @Column(nullable = false, length = 10)
-    private MemberType memberType;
+    @Convert(converter = MemberTypeConverter.class)
+    @Column(length = 10)
+    @ColumnDefault("STUDENT")
+    private MemberType memberType; // 회원구분
 
+    @ColumnDefault("0")
     private Integer currentScore; // 현재 신청한 강의수
+    @ColumnDefault("0")
     private Integer maxScore; // 신청 가능한 강의수
 
 
