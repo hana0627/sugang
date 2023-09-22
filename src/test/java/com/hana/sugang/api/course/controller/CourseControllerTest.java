@@ -205,7 +205,31 @@ class CourseControllerTest {
                 .andExpect(jsonPath("$.validation.title").value("강의명을 입력해주세요."))
                 .andDo(print());
 
+    }
 
+
+    @Test
+    @DisplayName("교양,전공 여부가 없으면 강의등록에 실패한다.")
+    void saveCourseErrorWithNoType() throws Exception {
+        //given
+        long before = courseRepository.count();
+//        CourseCreate requestDto = CourseCreate.of("ZZZZ01","강의명","설명입니다.",30, "",3 );
+        CourseCreate requestDto = CourseCreate.of("ZZZZ01","강의명","설명입니다.",30, null,3 );
+
+
+        String json = objectMapper.writeValueAsString(requestDto);
+
+
+        //when & them
+        mvc.perform(post("/course")
+                        .contentType(APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("잘못된 요청입니다."))
+                .andExpect(jsonPath("$.validation.courseType").value("전공, 교양 여부를 선택해주세요."))
+                .andDo(print());
 
     }
 }

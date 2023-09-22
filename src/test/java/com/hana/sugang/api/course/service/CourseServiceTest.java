@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.List;
 
@@ -135,25 +136,9 @@ class CourseServiceTest {
     }
 
 
-
-    @Test
-    @DisplayName("강의명이 없으면 강의등록을 하지 못한다.")
-    void saveCourseError() {
-        //given
-        long before = courseRepository.count();
-        CourseCreate requestDto = CourseCreate.of("ZZZZ01","","설명입니다.",30, CourseType.CC,6 );
-
-
-        //when
-        courseService.saveCourse(requestDto);
-
-
-        //then
-        long after = courseRepository.count();
-        assertThat(after).isEqualTo(before+1);
-
-    }
-
+    // 테스트 케이스 작성시 실수한점
+    // 필드값에 대한 유효성 검사는 Controller 호출 이전에 수행.
+    // Controller 호출 이전이므로 당연히 ServiceTest에서는 유효성 검증 테스트 불가
 
 
 
