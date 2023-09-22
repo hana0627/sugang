@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
+@DisplayName("CourseService 테스트")
 class CourseServiceTest {
 
     @Autowired

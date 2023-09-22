@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
@@ -24,8 +26,13 @@ public class CourseController {
         return courseService.findOne(id);
     }
     @PostMapping("/course")
-    public Long createCourse(@RequestBody @Validated CourseCreate requestDto) {
-        return courseService.saveCourse(requestDto);
+    public Map<String,Long> createCourse(@RequestBody @Validated CourseCreate requestDto) {
+        Map<String, Long> map = new HashMap<>();
+        Long id = courseService.saveCourse(requestDto);
+
+        map.put("id",id);
+        return map;
+
     }
 
 }
