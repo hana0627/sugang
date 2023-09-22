@@ -1,22 +1,25 @@
 package com.hana.sugang.global.config.security;
 
 import com.hana.sugang.api.member.domain.Member;
+import com.hana.sugang.api.member.dto.response.MemberResponse;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 
+/**
+ * 로그인시 스프링시큐리티에서 이용할
+ * 회원정보를 담는 객체
+ */
 public class CustomUserDetails implements UserDetails {
 
     @Getter
-    private Member member;
-
-
+    private MemberResponse memberResponse;
 
     // form 로그인
-    public CustomUserDetails(Member member) {
-        this.member = member;
+    public CustomUserDetails(MemberResponse memberResponse) {
+        this.memberResponse = memberResponse;
     }
 
 
@@ -28,12 +31,12 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return member.getPassword();
+        return memberResponse.password();
     }
 
     @Override
     public String getUsername() {
-        return member.getUsername();
+        return memberResponse.username();
     }
 
 

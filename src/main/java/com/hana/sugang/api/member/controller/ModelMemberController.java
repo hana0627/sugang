@@ -18,7 +18,6 @@ public class ModelMemberController {
 
     @GetMapping("/member/login")
     private String member() {
-        System.out.println("야!");
         return "member/login";
     }
 }
