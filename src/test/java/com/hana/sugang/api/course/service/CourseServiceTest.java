@@ -5,6 +5,7 @@ import com.hana.sugang.api.course.domain.constant.CourseType;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.repository.CourseRepository;
+import com.hana.sugang.global.exception.CourseNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -98,7 +99,7 @@ class CourseServiceTest {
 
 
     @Test
-//    @DisplayName("없는 Id로 조회하면 EntityNotFoundException이 발생한다.")
+    @DisplayName("없는 Id로 조회하면 예외가 발생한다.")
     void findOneError() {
         //given
         CourseCreate requestDto = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
@@ -106,7 +107,7 @@ class CourseServiceTest {
 
 
         //when && then
-        assertThrows(EntityNotFoundException.class, () -> {
+        assertThrows(CourseNotFoundException.class, () -> {
             courseService.findOne(9999L);
         });
 
@@ -135,6 +136,23 @@ class CourseServiceTest {
 
 
 
+    @Test
+    @DisplayName("강의명이 없으면 강의등록을 하지 못한다.")
+    void saveCourseError() {
+        //given
+        long before = courseRepository.count();
+        CourseCreate requestDto = CourseCreate.of("ZZZZ01","","설명입니다.",30, CourseType.CC,6 );
+
+
+        //when
+        courseService.saveCourse(requestDto);
+
+
+        //then
+        long after = courseRepository.count();
+        assertThat(after).isEqualTo(before+1);
+
+    }
 
 
 

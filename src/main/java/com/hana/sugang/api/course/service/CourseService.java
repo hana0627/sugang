@@ -1,5 +1,6 @@
 package com.hana.sugang.api.course.service;
 
+import com.hana.sugang.global.exception.CourseNotFoundException;
 import com.hana.sugang.api.course.domain.Course;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
@@ -33,7 +34,7 @@ public class CourseService {
      * @return CourseResponse
      */
     public CourseResponse findOne(Long id) {
-        Course entity = courseRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+        Course entity = courseRepository.findById(id).orElseThrow(CourseNotFoundException::new);
         return CourseResponse.from(entity);
     }
 

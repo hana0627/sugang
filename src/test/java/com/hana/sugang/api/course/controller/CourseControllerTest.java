@@ -5,6 +5,7 @@ import com.hana.sugang.api.course.domain.Course;
 import com.hana.sugang.api.course.domain.constant.CourseType;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.repository.CourseRepository;
+import com.hana.sugang.global.exception.CourseNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.ServletException;
 import org.assertj.core.api.Assertions;
@@ -115,13 +116,13 @@ class CourseControllerTest {
         //given
 
         //when & then
-        assertThrows(ServletException.class, () -> {
-            mvc.perform(get("/course/9999"));
-        });
+            mvc.perform(get("/course/9999")
+                    .contentType(APPLICATION_JSON))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.code").value(404))
+                    .andExpect(jsonPath("$.message").value("강의를 찾을 수 없습니다."))
+                    .andDo(print());
 
-        // Expected :class jakarta.persistence.EntityNotFoundException
-        // Actual   :class jakarta.servlet.ServletException
-        
     }
 
 
@@ -157,6 +158,54 @@ class CourseControllerTest {
         assertThat(course.getCourseType()).isEqualTo(CourseType.CC);
         assertThat(course.getScore()).isEqualTo(3);
     }
-    
-    //TODO 강의등록 실패케이스 작성
+
+    @Test
+    @DisplayName("강의명이 없으면 강의등록이 이루어지지 않는다.")
+    void saveCourseError() throws Exception {
+        //given
+        long before = courseRepository.count();
+        CourseCreate requestDto = CourseCreate.of("ZZZZ01","","설명입니다.",30, CourseType.CC,3 );
+
+        String json = objectMapper.writeValueAsString(requestDto);
+
+
+        //when & them
+        mvc.perform(post("/course")
+                        .contentType(APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("잘못된 요청입니다."))
+                .andExpect(jsonPath("$.validation.title").value("강의명을 입력해주세요."))
+                .andDo(print());
+    }
+
+
+    @Test
+    @DisplayName("강의명이 없으면 강의등록이 이루어지지 않는다.")
+    void saveCourseError2() throws Exception {
+        //given
+        long before = courseRepository.count();
+//        CourseCreate requestDto = CourseCreate.of("ZZZZ01","강의명","설명입니다.",30, "",3 );
+        CourseCreate requestDto = CourseCreate.of("ZZZZ01","강의명","설명입니다.",30, null,3 );
+
+
+        String json = objectMapper.writeValueAsString(requestDto);
+
+
+        //when & them
+        mvc.perform(post("/course")
+                        .contentType(APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("잘못된 요청입니다."))
+                .andExpect(jsonPath("$.validation.title").value("강의명을 입력해주세요."))
+                .andDo(print());
+
+
+
+    }
 }
