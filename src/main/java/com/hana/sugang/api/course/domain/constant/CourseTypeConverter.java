@@ -1,5 +1,6 @@
 package com.hana.sugang.api.course.domain.constant;
 
+import com.hana.sugang.global.exception.EnumConvertException;
 import jakarta.persistence.AttributeConverter;
 
 import java.util.Arrays;
@@ -25,9 +26,8 @@ public class CourseTypeConverter implements AttributeConverter<CourseType,String
 
     @Override
     public CourseType convertToEntityAttribute(String dbData) {
-        //TODO orElseThrow 마치지 말고 custom Exception으로 변경
         return Arrays.stream(CourseType.values())
                 .filter(s -> s.toString().equals(dbData))
-                .findFirst().orElseThrow();
+                .findFirst().orElseThrow(EnumConvertException::new);
     }
 }
