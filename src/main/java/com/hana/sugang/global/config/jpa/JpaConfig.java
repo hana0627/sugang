@@ -1,4 +1,4 @@
-package com.hana.sugang.global.config;
+package com.hana.sugang.global.config.jpa;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
