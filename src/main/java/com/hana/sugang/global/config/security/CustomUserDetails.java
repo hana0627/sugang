@@ -1,12 +1,12 @@
 package com.hana.sugang.global.config.security;
 
-import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.dto.response.MemberResponse;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * 로그인시 스프링시큐리티에서 이용할
@@ -26,7 +26,8 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         //권한부
-        return null;
+//        return List.of(() -> memberResponse.memberType().toString());
+        return Collections.singletonList(new CustomGrantedAuthority(memberResponse.memberType().getRoleName()));
     }
 
     @Override
