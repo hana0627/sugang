@@ -5,12 +5,14 @@ import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.dto.request.MemberCrate;
 import com.hana.sugang.api.member.dto.response.MemberResponse;
 import com.hana.sugang.api.member.repository.MemberRepository;
+import com.hana.sugang.global.config.security.CustomPasswordEncoder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +37,8 @@ class MemberServiceTest {
     @Mock
     private MemberRepository memberRepository;
 
+    @Mock
+    private CustomPasswordEncoder passwordEncoder;
     @Test
     @DisplayName("회원 전체 조회")
     void findMembers() {

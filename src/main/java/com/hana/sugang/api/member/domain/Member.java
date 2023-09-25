@@ -26,10 +26,10 @@ public class Member  extends AuditingFields {
     @Column(length = 20, nullable = false, unique = true)
     private String username; // 학생코드(학번 등으로 이용)
 
-    @Column(length = 20, nullable = false)
+    @Column(length = 100, nullable = false)
     private String password; //비밀번호
     
-    @Column(length = 30)
+    @Column(length = 30, nullable = false)
     private String name; // 이름
 
     @Convert(converter = MemberTypeConverter.class)

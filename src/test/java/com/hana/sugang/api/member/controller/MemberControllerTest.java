@@ -5,6 +5,7 @@ import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.dto.request.MemberCrate;
 import com.hana.sugang.api.member.repository.MemberRepository;
+import com.hana.sugang.global.config.security.CustomPasswordEncoder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,8 @@ class MemberControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CustomPasswordEncoder passwordEncoder;
 
     @Test
     @DisplayName("회원 전체조회")
@@ -99,9 +102,94 @@ class MemberControllerTest {
         assertThat(member.getUsername()).isEqualTo(memberCreate.username());
         assertThat(member.getName()).isEqualTo(memberCreate.name());
         assertThat(member.getMemberType()).isEqualTo(memberCreate.memberType());
-        assertThat(member.getPassword()).isEqualTo(memberCreate.password());
+
+        assertThat(true).isEqualTo(passwordEncoder.matches(memberCreate.password(), member.getPassword()));
+    }
+
+    @Test
+    @DisplayName("회원저장시 username이 중복되면 예외를 발생시킨다.")
+    void saveMemberWithSameUsername() throws Exception {
+        //given
+        MemberCrate memberCreate = createMemberCreate();
+        Member member = Member
+                .builder()
+                .username(memberCreate.username())
+                .password(memberCreate.password())
+                .name(memberCreate.name())
+                .memberType(memberCreate.memberType())
+                .build();
+        memberRepository.save(member);
+
+        String json = objectMapper.writeValueAsString(memberCreate);
 
 
+        //when & then
+        mvc.perform(post("/member")
+                        .contentType(APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.code").value(409))
+                .andExpect(jsonPath("$.message").value("중복된 회원코드 입니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("회원 저장시 회원타입은 필수값이다.")
+    void saveMemberWithNoMemberType() throws Exception {
+        //given
+        MemberCrate memberCreate = createMemberCreateNoMemberType();
+        String json = objectMapper.writeValueAsString(memberCreate);
+
+
+        //when & then
+        mvc.perform(post("/member")
+                        .contentType(APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("잘못된 요청입니다."))
+                .andExpect(jsonPath("$.validation.memberType").value("회원 구분을 선택해주세요."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("회원 저장시 username값은 필수값이다.")
+    void saveMemberWithNoUsername() throws Exception {
+        //given
+        MemberCrate memberCreate = createMemberCreateNoUsername();
+        String json = objectMapper.writeValueAsString(memberCreate);
+
+
+        //when & then
+        mvc.perform(post("/member")
+                        .contentType(APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("잘못된 요청입니다."))
+                .andExpect(jsonPath("$.validation.username").value("회원코드를 입력해주세요."))
+                .andDo(print());
+
+    }
+
+    @Test
+    @DisplayName("회원 저장시 이름과 패스워드는 필수값이다.")
+    void saveMemberWithNoNameAndNoPassword() throws Exception {
+        //given
+        MemberCrate memberCreate = createMemberCreateNoNameAndNoPassword();
+        String json = objectMapper.writeValueAsString(memberCreate);
+
+
+        //when & then
+        mvc.perform(post("/member")
+                        .contentType(APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("잘못된 요청입니다."))
+                .andExpect(jsonPath("$.validation.password").value("비밀번호를 입력해주세요."))
+                .andExpect(jsonPath("$.validation.name").value("이름을 입력해주세요."))
+                .andDo(print());
     }
 
 
@@ -122,6 +210,31 @@ class MemberControllerTest {
                 .username(uuid + "test")
                 .password("123456")
                 .name(uuid)
+                .memberType(MemberType.STUDENT)
+                .build();
+    }
+
+    private MemberCrate createMemberCreateNoMemberType() {
+        String uuid = UUID.randomUUID().toString().substring(0,8);
+        return MemberCrate.builder()
+                .username(uuid + "test")
+                .password("123456")
+                .name(uuid)
+                .build();
+    }
+
+    private MemberCrate createMemberCreateNoUsername() {
+        String uuid = UUID.randomUUID().toString().substring(0,8);
+        return MemberCrate.builder()
+                .password("123456")
+                .name(uuid)
+                .memberType(MemberType.STUDENT)
+                .build();
+    }
+    private MemberCrate createMemberCreateNoNameAndNoPassword() {
+        String uuid = UUID.randomUUID().toString().substring(0,8);
+        return MemberCrate.builder()
+                .username(uuid + "test")
                 .memberType(MemberType.STUDENT)
                 .build();
     }

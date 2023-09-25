@@ -5,6 +5,7 @@ import com.hana.sugang.api.member.dto.request.MemberCrate;
 import com.hana.sugang.api.member.dto.response.MemberResponse;
 import com.hana.sugang.api.member.repository.MemberRepository;
 import com.hana.sugang.global.config.security.CustomPasswordEncoder;
+import com.hana.sugang.global.exception.MemberDuplicateException;
 import com.hana.sugang.global.exception.MemberNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -85,5 +87,12 @@ public class MemberService {
         Member savedMember = memberRepository.save(member);
 
         return savedMember.getId();
+    }
+
+    public void duplicateMember(MemberCrate requestDto) {
+        Optional<Member> optional = memberRepository.findByUsername(requestDto.username());
+        if(optional.isPresent()) {
+            throw new MemberDuplicateException();
+        }
     }
 }
