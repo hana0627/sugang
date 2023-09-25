@@ -2,6 +2,7 @@ package com.hana.sugang.api.member.domain.constant;
 
 import com.hana.sugang.global.exception.EnumConvertException;
 import jakarta.persistence.AttributeConverter;
+import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 
@@ -16,7 +17,12 @@ public class MemberTypeConverter  implements AttributeConverter<MemberType,Strin
      */
     @Override
     public String convertToDatabaseColumn(MemberType attribute) {
-        return attribute.toString();
+        if(StringUtils.hasText(attribute.toString())) {
+            return attribute.toString();
+        }
+        else {
+            return "STUDENT";
+        }
     }
     /**
      * DB데이터(varchar) -> CourseType으로 변경

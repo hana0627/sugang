@@ -23,18 +23,17 @@ public class Member  extends AuditingFields {
 
     // 스프링시큐리티와의 연동에서 네이밍 편의상 unique값을 username으로 통일
     // 실제 회원이름을 나타내는 것이 아니라, 학생코드를 의미
-    @Column(length = 10, nullable = false, unique = true)
+    @Column(length = 20, nullable = false, unique = true)
     private String username; // 학생코드(학번 등으로 이용)
 
-    @Column(length = 20, nullable = false)
+    @Column(length = 100, nullable = false)
     private String password; //비밀번호
     
-    @Column(length = 30)
+    @Column(length = 30, nullable = false)
     private String name; // 이름
 
     @Convert(converter = MemberTypeConverter.class)
     @Column(length = 10)
-    @ColumnDefault("STUDENT")
     private MemberType memberType; // 회원구분
 
     @ColumnDefault("0")

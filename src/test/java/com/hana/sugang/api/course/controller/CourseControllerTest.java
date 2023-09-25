@@ -185,7 +185,6 @@ class CourseControllerTest {
     @DisplayName("교양,전공 여부가 없으면 강의등록에 실패한다.")
     void saveCourseErrorWithNoType() throws Exception {
         //given
-        long before = courseRepository.count();
 //        CourseCreate requestDto = CourseCreate.of("ZZZZ01","강의명","설명입니다.",30, "",3 );
         CourseCreate requestDto = CourseCreate.of("ZZZZ01","강의명","설명입니다.",30, null,3 );
 
