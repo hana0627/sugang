@@ -4,6 +4,7 @@ import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.dto.request.MemberCrate;
 import com.hana.sugang.api.member.dto.response.MemberResponse;
 import com.hana.sugang.api.member.repository.MemberRepository;
+import com.hana.sugang.global.config.security.CustomPasswordEncoder;
 import com.hana.sugang.global.exception.MemberNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -19,6 +19,8 @@ import java.util.Optional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+
+    private final CustomPasswordEncoder customPasswordEncoder;
 
 
     /**
@@ -75,7 +77,7 @@ public class MemberService {
     public Long saveMember(MemberCrate requestDto) {
         Member member = Member.builder()
                 .username(requestDto.username())
-                .password(requestDto.password())
+                .password(customPasswordEncoder.encode(requestDto.password()))
                 .name(requestDto.name())
                 .memberType(requestDto.memberType())
                 .build();
