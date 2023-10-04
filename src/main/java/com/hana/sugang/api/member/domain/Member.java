@@ -1,19 +1,17 @@
 package com.hana.sugang.api.member.domain;
 
-import com.hana.sugang.api.course.domain.constant.CourseTypeConverter;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.domain.constant.MemberTypeConverter;
 import com.hana.sugang.global.domain.AuditingFields;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
+@ToString
 public class Member  extends AuditingFields {
 
     @Id
@@ -42,6 +40,11 @@ public class Member  extends AuditingFields {
     private Integer maxScore; // 신청 가능한 강의수
 
 
+    @PrePersist
+    private void columnDefault() {
+        this.currentScore = 0;
+    }
+
     /**
      * 멤버엔티티는 상황에 따라서
      * 생성자로 들어오는 파라미터 수가 많거나.
@@ -57,4 +60,33 @@ public class Member  extends AuditingFields {
         this.currentScore = currentScore;
         this.maxScore = maxScore;
     }
+
+
+    /**
+     * "현재신청한 학점수 + 신청한 과목의 학점수" 가 신청가능한 학점보다 큰지 확인
+     * @return 현재신청한 학점수 + 신청한 과목의 학점수 가 더 크면 ture;
+     */
+    public boolean isMaxScore(int score) {
+        return this.currentScore + score > this.maxScore;
+    }
+
+
+    /**
+     * 수강신청시 해당 학점만큼 현재 신청한 학점 증가
+     * @param score
+     */
+    public void addCurrentScore(Integer score) {
+        this.currentScore += score;
+    }
+    
+    
+    //TODO 사용금지
+    /**
+     * 테스트편의를 위한 상태변경메소드
+     * 테스트코드 외 절대사용금지
+     */
+    public void MaxCurrentScoreFORTEST() {
+        this.currentScore = this.maxScore;
+    }
+
 }
