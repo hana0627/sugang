@@ -2,10 +2,18 @@ package com.hana.sugang.api.course.service;
 
 import com.hana.sugang.api.course.domain.Course;
 import com.hana.sugang.api.course.domain.constant.CourseType;
+import com.hana.sugang.api.course.domain.mapping.MemberCourse;
+import com.hana.sugang.api.course.dto.mapping.MemberCourseDto;
+import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.repository.CourseRepository;
+import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
+import com.hana.sugang.api.member.domain.Member;
+import com.hana.sugang.api.member.domain.constant.MemberType;
+import com.hana.sugang.api.member.repository.MemberRepository;
 import com.hana.sugang.global.exception.CourseNotFoundException;
+import com.hana.sugang.global.exception.MaxCountException;
 import jakarta.persistence.EntityNotFoundException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -18,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -32,24 +42,17 @@ class CourseServiceTest {
 
     @Autowired
     private CourseRepository courseRepository;
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private MemberCourseRepository memberCourseRepository;
 
     @BeforeEach
     void before() {
 
-        for(int i = 1; i <=20; i++) {
-            if(i <10 && i %2 == 0) {
-                CourseCreate requestDto = CourseCreate.of("ABCD0"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.CC,3 );
-                courseRepository.save(requestDto.toEntity(requestDto));
-            }
-            else if(i <10) {
-                CourseCreate requestDto = CourseCreate.of("ABCD0"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.GC,3 );
-                courseRepository.save(requestDto.toEntity(requestDto));
-            }
-            else {
-                CourseCreate requestDto = CourseCreate.of("ABCD"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.CC,3 );
-                courseRepository.save(requestDto.toEntity(requestDto));
-            }
-        }
+        memberRepository.deleteAll();
+        courseRepository.deleteAll();
+
 
     }
 
@@ -66,7 +69,20 @@ class CourseServiceTest {
     @DisplayName("강의 전체 조회")
     void findCourses() {
         //given
-        //nothing
+        for(int i = 1; i <=20; i++) {
+            if(i <10 && i %2 == 0) {
+                CourseCreate requestDto = CourseCreate.of("ABCD0"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.CC,3 );
+                courseRepository.save(requestDto.toEntity(requestDto));
+            }
+            else if(i <10) {
+                CourseCreate requestDto = CourseCreate.of("ABCD0"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.GC,3 );
+                courseRepository.save(requestDto.toEntity(requestDto));
+            }
+            else {
+                CourseCreate requestDto = CourseCreate.of("ABCD"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.CC,3 );
+                courseRepository.save(requestDto.toEntity(requestDto));
+            }
+        }
 
         //when
         List<CourseResponse> courses = courseService.findCourses();
@@ -114,12 +130,10 @@ class CourseServiceTest {
         });
 
 
-        //then
-
     }
 
     @Test
-    @DisplayName("강의 등록")
+    @DisplayName("강의등록")
     void saveCourse() {
         //given
         long before = courseRepository.count();
@@ -136,11 +150,124 @@ class CourseServiceTest {
 
     }
 
+    @Test
+    @DisplayName("수강신청 - validationTest")
+    void applyValidationTest() {
+        //given
+        CourseCreate courseCreate = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+        Long courseId = courseService.saveCourse(courseCreate);
+        Member savedMember = memberRepository.save(createMember());
+        CourseApply courseApply = CourseApply.of(courseId, savedMember.getUsername());
+
+        //when
+        courseService.applyValidation(courseApply);
+
+        //then
+        //Nothing
+
+    }
+
+
+    @Test
+    @DisplayName("수강신청 - 강의정원이 다차면 예외발생")
+    void applyValidationTestWithMaxCount() {
+        //given
+        Course savedCourse = courseRepository.save(createCourse());
+        Member savedMember = memberRepository.save(createMember());
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+
+
+        savedCourse.maxCurrentCountFORTEST();
+
+        //when & then
+        assertThrows(MaxCountException.class, ()-> {
+            courseService.applyValidation(courseApply);
+        });
+    }
+
+    @Test
+    @DisplayName("수강신청 - 수강가능 학점이 초과하면 예외발생")
+    void applyValidationTestWithMaxScore() {
+        //given
+        Course savedCourse = courseRepository.save(createCourse());
+        Member savedMember = memberRepository.save(createMember());
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+
+        savedMember.MaxCurrentScoreFORTEST();
+
+        //when & then
+        assertThrows(MaxCountException.class, ()-> {
+            courseService.applyValidation(courseApply);
+        });
+    }
+
+
+    @Test
+    @DisplayName("수강신청이 성공하는 경우")
+    void applyCourseTest() {
+        //given
+        Course savedCourse = courseRepository.save(createCourse());
+        Member savedMember = memberRepository.save(createMember());
+        Integer beforeCount = savedCourse.getCurrentCount();
+        Integer beforeScore = savedMember.getCurrentScore();
+
+        long beforeMC = memberCourseRepository.count();
+
+        MemberCourseDto memberCourseDto = MemberCourseDto.of(savedCourse, savedMember);
+
+
+
+        //when
+        courseService.applyCourse(memberCourseDto);
+
+        //then
+        Integer afterCount = savedCourse.getCurrentCount();
+        Integer afterScore = savedMember.getCurrentScore();
+
+        //수강신청인원수는 1증가
+        assertThat(afterCount).isEqualTo(beforeCount+1);
+        // 현재학점은 강의학점만큼 증가
+        assertThat(afterScore).isEqualTo(beforeScore+savedCourse.getScore());
+
+
+        long afterMC = memberCourseRepository.count();
+        assertThat(afterMC).isEqualTo(beforeMC+1);
+
+        Optional<MemberCourse> optional = memberCourseRepository.findMemberCourseByMemberIdAndCourseId(savedMember.getId(), savedCourse.getId());
+        MemberCourse memberCourse = optional.get();
+        System.out.println(memberCourse);
+
+
+    }
+    
+    
+    
+    
 
     // 테스트 케이스 작성시 실수한점
     // 필드값에 대한 유효성 검사는 Controller 호출 이전에 수행.
     // Controller 호출 이전이므로 당연히 ServiceTest에서는 유효성 검증 테스트 불가
 
 
+    private Course createCourse() {
+        return Course.builder()
+                .code("ZZZZ01")
+                .title("테스트등록강의")
+                .description("설명입니다.")
+                .maxCount(30)
+                .courseType(CourseType.CC)
+                .score(3)
+                .build();
+    }
+
+    private Member createMember() {
+        return Member.builder()
+                .username("HANATEST111")
+                .password("123456")
+                .name("HANATEST111")
+                .maxScore(21)
+                .memberType(MemberType.STUDENT)
+                .build();
+    }
 
 }

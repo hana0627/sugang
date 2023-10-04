@@ -5,12 +5,14 @@ import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.dto.request.MemberCrate;
 import com.hana.sugang.api.member.repository.MemberRepository;
+import com.hana.sugang.config.TestSecurityConfig;
 import com.hana.sugang.global.config.security.CustomPasswordEncoder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,11 +47,11 @@ class MemberControllerTest {
     @DisplayName("회원 전체조회")
     void memberList() throws Exception {
         //given
-        for(int i = 0; i<20; i++) {
-            Member member = createMember();
-            memberRepository.save(member);
-
-        }
+//        for(int i = 0; i<20; i++) {
+//            Member member = createMember();
+//            memberRepository.save(member);
+//
+//        }
         //when & then
         mvc.perform(get("/members"))
                 .andExpect(status().isOk())
