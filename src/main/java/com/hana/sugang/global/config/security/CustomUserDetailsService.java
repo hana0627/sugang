@@ -2,9 +2,7 @@ package com.hana.sugang.global.config.security;
 
 import com.hana.sugang.api.member.dto.response.MemberResponse;
 import com.hana.sugang.api.member.service.MemberService;
-import com.hana.sugang.global.exception.MemberNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
