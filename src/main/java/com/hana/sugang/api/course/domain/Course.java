@@ -3,12 +3,14 @@ package com.hana.sugang.api.course.domain;
 
 import com.hana.sugang.api.course.domain.constant.CourseType;
 import com.hana.sugang.api.course.domain.constant.CourseTypeConverter;
+import com.hana.sugang.api.course.domain.mapping.MemberCourse;
 import com.hana.sugang.global.domain.AuditingFields;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -29,7 +31,7 @@ public class Course extends AuditingFields {
     private String description; //과목설명
     @Column(nullable = false, length = 50)
     private Integer maxCount; // 최대 수강신청가능 인원 수
-
+    @ColumnDefault("0")
     private Integer currentCount;// 현재 수강신청 인원 수
 
 
@@ -40,9 +42,10 @@ public class Course extends AuditingFields {
     private Integer score; // 학점
 
 
+    @OneToMany(mappedBy = "course", cascade = {CascadeType.ALL})
+    private List<MemberCourse> memberCourses = new ArrayList<>();
 
 
-    //
     @Builder
     public Course(String code, String title, String description, Integer maxCount, Integer currentCount, CourseType courseType, Integer score) {
         this.code = code;
@@ -53,5 +56,38 @@ public class Course extends AuditingFields {
         this.courseType = courseType;
         this.score = score;
     }
+
+
+    @PrePersist
+    private void columnDefault() {
+        this.currentCount = 0;
+    }
+
+
+    /**
+     * 강의 마감여부 체크 메소드
+     * @return 현재 신청인원이 정원보다 많으면 return true 그렇지 않으면 return false
+     */
+    public boolean isFulled() {
+        return this.currentCount >= this.maxCount;
+    }
+
+
+    /**
+     * 수강신청시 현재신청인원 +1
+     */
+    public void addCurrentCount() {
+        this.currentCount += 1;
+    }
+
+    //TODO 사용금지
+    /**
+     * 테스트편의를 위한 상태변경메소드
+     * 테스트코드 외 절대사용금지
+     */
+    public void maxCurrentCountFORTEST() {
+        this.currentCount = this.maxCount;
+    }
+
 
 }

@@ -1,5 +1,7 @@
 package com.hana.sugang.api.course.controller;
 
+import com.hana.sugang.api.course.dto.mapping.MemberCourseDto;
+import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.service.CourseService;
@@ -35,4 +37,21 @@ public class CourseController {
 
     }
 
+    /**
+     * 학생이 수강 신청
+     */
+    @PostMapping("/course/apply")
+    public Map<String,String> applyCourse(@RequestBody CourseApply requestDto) {
+        Map<String, String> map = new HashMap<>();
+
+        // 수강가능 여부를 확인
+        String message = courseService.applyCourse(requestDto);
+
+        // 수강신청
+//        String message = courseService.applyCourse(memberCourseDto);
+
+        map.put("message",message);
+
+        return map;
+    }
 }

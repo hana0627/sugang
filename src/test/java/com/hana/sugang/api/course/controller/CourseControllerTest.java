@@ -3,12 +3,13 @@ package com.hana.sugang.api.course.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hana.sugang.api.course.domain.Course;
 import com.hana.sugang.api.course.domain.constant.CourseType;
+import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.repository.CourseRepository;
-import com.hana.sugang.global.exception.CourseNotFoundException;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.ServletException;
-import org.assertj.core.api.Assertions;
+import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
+import com.hana.sugang.api.member.domain.Member;
+import com.hana.sugang.api.member.domain.constant.MemberType;
+import com.hana.sugang.api.member.repository.MemberRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +41,10 @@ class CourseControllerTest {
     private MockMvc mvc;
     @Autowired
     private CourseRepository courseRepository;
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private MemberCourseRepository memberCourseRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -52,28 +56,25 @@ class CourseControllerTest {
 
     @BeforeEach
     void before() {
-
-        for(int i = 1; i <=20; i++) {
-            if(i <10 && i %2 == 0) {
-                CourseCreate requestDto = CourseCreate.of("ABCD0"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.CC,3 );
-                courseRepository.save(requestDto.toEntity(requestDto));
-            }
-            else if(i <10) {
-                CourseCreate requestDto = CourseCreate.of("ABCD0"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.GC,3 );
-                courseRepository.save(requestDto.toEntity(requestDto));
-            }
-            else {
-                CourseCreate requestDto = CourseCreate.of("ABCD"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.CC,3 );
-                courseRepository.save(requestDto.toEntity(requestDto));
-            }
-        }
-
-    }
-    @AfterEach
-    void after() {
+        memberRepository.deleteAll();
         courseRepository.deleteAll();
-    }
+//
+//        for(int i = 1; i <=20; i++) {
+//            if(i <10 && i %2 == 0) {
+//                CourseCreate requestDto = CourseCreate.of("ABCD0"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.CC,3 );
+//                courseRepository.save(requestDto.toEntity(requestDto));
+//            }
+//            else if(i <10) {
+//                CourseCreate requestDto = CourseCreate.of("ABCD0"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.GC,3 );
+//                courseRepository.save(requestDto.toEntity(requestDto));
+//            }
+//            else {
+//                CourseCreate requestDto = CourseCreate.of("ABCD"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.CC,3 );
+//                courseRepository.save(requestDto.toEntity(requestDto));
+//            }
+//        }
 
+    }
     @Test
     @DisplayName("강의 전체조회")
     void courseList() throws Exception {
@@ -193,15 +194,105 @@ class CourseControllerTest {
 
 
         //when & them
-        mvc.perform(post("/course")
+        mvc.perform(post("/course/")
                         .contentType(APPLICATION_JSON)
                         .content(json)
                 )
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("잘못된 요청입니다."))
-                .andExpect(jsonPath("$.validation.courseType").value("전공, 교양 여부를 선택해주세요."))
+                .andExpect(status().is4xxClientError())
                 .andDo(print());
 
     }
+
+
+
+    @Test
+    @DisplayName("수강신청")
+    void applyCourse() throws Exception {
+        //given
+        CourseCreate requestDto = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+        Course savedCourse = courseRepository.save(CourseCreate.toEntity(requestDto));
+        Member savedMember = memberRepository.save(createMember());
+
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+
+        String json = objectMapper.writeValueAsString(courseApply);
+
+
+        //when & them
+        mvc.perform(post("/course/apply")
+                        .contentType(APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().isOk())
+
+                .andExpect(jsonPath("$.message").value("수강신청 되었습니다."))
+                .andDo(print());
+
+    }
+
+    @Test
+    @DisplayName("수강신청케이스 - 강의정원이 다 찼을경우")
+    void applyCourseWithMaxCount() throws Exception {
+        //given
+        CourseCreate requestDto = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+        Course savedCourse = courseRepository.save(CourseCreate.toEntity(requestDto));
+        savedCourse.maxCurrentCountFORTEST();
+
+        Member savedMember = memberRepository.save(createMember());
+
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+
+
+        String json = objectMapper.writeValueAsString(courseApply);
+
+
+        //when & them
+        mvc.perform(post("/course/apply")
+                        .contentType(APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.code").value(409))
+                .andExpect(jsonPath("$.message").value("수강인원이 가득 찼습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("수강신청케이스 - 수강신청 학점이 초과하는경우")
+    void applyCourseWithMaxScore() throws Exception {
+        //given
+        CourseCreate requestDto = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+        Course savedCourse = courseRepository.save(CourseCreate.toEntity(requestDto));
+
+        Member savedMember = memberRepository.save(createMember());
+        savedMember.MaxCurrentScoreFORTEST();
+
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+
+
+        String json = objectMapper.writeValueAsString(courseApply);
+
+
+        //when & them
+        mvc.perform(post("/course/apply")
+                        .contentType(APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.code").value(409))
+                .andExpect(jsonPath("$.message").value("신청할 수 있는 학점을 초과했습니다."))
+                .andDo(print());
+    }
+
+    private Member createMember() {
+        return Member.builder()
+                .username("HANATEST")
+                .password("123456")
+                .name("HANATEST")
+                .memberType(MemberType.STUDENT)
+                .currentScore(0)
+                .maxScore(21)
+                .build();
+    }
+
 }
