@@ -1,6 +1,5 @@
 package com.hana.sugang.api.course.controller;
 
-import com.hana.sugang.api.course.dto.mapping.MemberCourseDto;
 import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.response.CourseResponse;

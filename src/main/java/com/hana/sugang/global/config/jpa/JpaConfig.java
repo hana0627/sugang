@@ -1,5 +1,8 @@
 package com.hana.sugang.global.config.jpa;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
@@ -23,4 +26,15 @@ public class JpaConfig {
                 .filter(Authentication::isAuthenticated)
                 .map(Authentication::getName);
     }
+
+    //QueryDSL config - start
+    @PersistenceContext
+    public EntityManager em;
+
+
+    @Bean
+    public JPAQueryFactory jpaQueryFactory() {
+        return new JPAQueryFactory(em);
+    }
+    //QueryDSL config - end
 }
