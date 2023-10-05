@@ -42,7 +42,7 @@ public class Course extends AuditingFields {
     private Integer score; // 학점
 
 
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", cascade = {CascadeType.ALL})
     private List<MemberCourse> memberCourses = new ArrayList<>();
 
 

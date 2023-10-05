@@ -56,8 +56,6 @@ class CourseControllerTest {
 
     @BeforeEach
     void before() {
-        memberCourseRepository.deleteAll();
-
         memberRepository.deleteAll();
         courseRepository.deleteAll();
 //

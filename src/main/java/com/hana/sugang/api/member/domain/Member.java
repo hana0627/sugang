@@ -1,5 +1,6 @@
 package com.hana.sugang.api.member.domain;
 
+import com.hana.sugang.api.course.domain.mapping.MemberCourse;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.domain.constant.MemberTypeConverter;
 import com.hana.sugang.global.domain.AuditingFields;
@@ -7,6 +8,9 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
@@ -37,6 +41,9 @@ public class Member  extends AuditingFields {
     private Integer currentScore; // 현재 신청한 강의수
     @ColumnDefault("0")
     private Integer maxScore; // 신청 가능한 강의수
+
+    @OneToMany(mappedBy = "member", cascade = {CascadeType.ALL})
+    private List<MemberCourse> memberCourses = new ArrayList<>();
 
 
     @PrePersist
