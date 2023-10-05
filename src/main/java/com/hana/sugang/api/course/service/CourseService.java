@@ -65,11 +65,6 @@ public class CourseService {
      */
     @Transactional
     public String applyCourse(CourseApply requestDto) {
-        System.out.println("[CourseService] applyCourse - called");
-        long memberCount = memberRepository.count();
-        long courseCount = courseRepository.count();
-        System.out.println("애플리케이션 memberCount  = " + memberCount);
-        System.out.println("애플리케이션 courseCount  = " + courseCount);
         Course course = courseRepository.findById(requestDto.courseId()).orElseThrow(CourseNotFoundException::new);
         Member member = memberRepository.findByUsername(requestDto.username()).orElseThrow(MemberNotFoundException::new);
 

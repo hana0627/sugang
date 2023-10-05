@@ -13,14 +13,11 @@ import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.repository.MemberRepository;
 import com.hana.sugang.global.exception.CourseNotFoundException;
 import com.hana.sugang.global.exception.MaxCountException;
-import jakarta.persistence.EntityManager;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -32,7 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-@Transactional
 @DisplayName("CourseService 테스트")
 class CourseServiceTest {
 
@@ -45,8 +41,6 @@ class CourseServiceTest {
     private MemberRepository memberRepository;
     @Autowired
     private MemberCourseRepository memberCourseRepository;
-    @Autowired
-    private EntityManager em;
 
     @BeforeEach
     void before() {
@@ -213,31 +207,23 @@ class CourseServiceTest {
      */
     @Test
     @DisplayName("동시에 100개의 요청이 한개의 강의에 요청을 보내는 경우")
-    @Transactional
     void current100request() throws Exception {
         //given
         Course savedCourse = courseRepository.save(createCourse());
 
-        int threadCount = 10;
+        int threadCount = 32;
 
         // 고정된 쓰레드풀을 생성
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(100);
 
         // CountDownLatch : 다른 스레드에서 수행중인 작업이 완료될 때 까지 대기해주는 객체
         CountDownLatch latch = new CountDownLatch(threadCount);
-        long memberCount = memberRepository.count();
-        long courseCount = courseRepository.count();
-
-        System.out.println("테스트코드 memberCount  = " + memberCount);
-        System.out.println("테스트코드 courseCount  = " + courseCount);
 
         //when
         for(int i = 0 ;i<threadCount; i++) {
 
 //            Member savedMember = memberRepository.save(createMember(i)); // username : hana0, hana1, hana2 ...
-//            CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
             CourseApply courseApply = CourseApply.of(savedCourse.getId(), "HANATEST"+i);
-
             executorService.submit(() -> {
                 try {
                     courseService.applyCourse(courseApply);
@@ -253,7 +239,7 @@ class CourseServiceTest {
         latch.await();
 
         //then
-        // ???
+        assertThat(savedCourse.getCurrentCount()).isEqualTo(savedCourse.getMaxCount());
     }
 
 
