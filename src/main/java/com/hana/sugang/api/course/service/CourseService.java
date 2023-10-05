@@ -65,6 +65,11 @@ public class CourseService {
      */
     @Transactional
     public String applyCourse(CourseApply requestDto) {
+        System.out.println("[CourseService] applyCourse - called");
+        long memberCount = memberRepository.count();
+        long courseCount = courseRepository.count();
+        System.out.println("애플리케이션 memberCount  = " + memberCount);
+        System.out.println("애플리케이션 courseCount  = " + courseCount);
         Course course = courseRepository.findById(requestDto.courseId()).orElseThrow(CourseNotFoundException::new);
         Member member = memberRepository.findByUsername(requestDto.username()).orElseThrow(MemberNotFoundException::new);
 
@@ -72,19 +77,18 @@ public class CourseService {
         if (member.isMaxScore(course.getScore())) {
             throw new MaxCountException("신청할 수 있는 학점을 초과했습니다.");
         }
-
         // 강의정원이 마감되는경우
         if (course.isFulled()) {
             throw new MaxCountException("수강인원이 가득 찼습니다.");
         }
-
+        
         MemberCourse memberCourse = MemberCourse.of(course, member);
         memberCourseRepository.save(memberCourse);
-
+        
         //신청학점 증가 및 신청인원증가
         member.addCurrentScore(course.getScore());
         course.addCurrentCount();
-
+        
         return "수강신청 되었습니다.";
 
     }

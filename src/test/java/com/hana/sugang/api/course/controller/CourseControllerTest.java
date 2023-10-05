@@ -22,6 +22,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -388,6 +391,22 @@ class CourseControllerTest {
                 .andExpect(jsonPath("$.message").value("신청할 수 있는 학점을 초과했습니다."))
                 .andDo(print());
     }
+    
+    /**
+     * mutilThread환경 테스트
+     */
+    @Test
+    @DisplayName("동시에 100개의 요청이 한개의 강의에 요청을 보내는 경우")
+    void current100request() throws Exception {
+        //given
+
+        //when
+
+        //then
+
+    }
+
+    
 
     private Member createMember() {
         return Member.builder()
@@ -399,5 +418,7 @@ class CourseControllerTest {
                 .maxScore(21)
                 .build();
     }
+
+
 
 }

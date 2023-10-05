@@ -13,15 +13,20 @@ import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.repository.MemberRepository;
 import com.hana.sugang.global.exception.CourseNotFoundException;
 import com.hana.sugang.global.exception.MaxCountException;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -40,19 +45,19 @@ class CourseServiceTest {
     private MemberRepository memberRepository;
     @Autowired
     private MemberCourseRepository memberCourseRepository;
+    @Autowired
+    private EntityManager em;
 
     @BeforeEach
     void before() {
 
-        memberRepository.deleteAll();
-        courseRepository.deleteAll();
+//        memberRepository.deleteAll();
+//        courseRepository.deleteAll();
 
-
-    }
-
-    @AfterEach
-    void clean() {
-        courseRepository.deleteAll();
+        Course savedCourse = courseRepository.save(createCourse());
+        for(int i = 0; i<100; i++) {
+            memberRepository.save(createMember(i));
+        }
     }
 
     @Test
@@ -141,20 +146,31 @@ class CourseServiceTest {
     }
 
     @Test
-    @DisplayName("수강신청 - validationTest")
+    @DisplayName("수강신청 성공케이스")
     void applyValidationTest() {
         //given
-        CourseCreate courseCreate = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
-        Long courseId = courseService.saveCourse(courseCreate);
+        Course savedCourse = courseRepository.save(createCourse());
         Member savedMember = memberRepository.save(createMember());
-        CourseApply courseApply = CourseApply.of(courseId, savedMember.getUsername());
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+
+        long before = memberCourseRepository.count();
+        Integer beforeCount = savedCourse.getCurrentCount();
+        Integer beforeScore = savedMember.getCurrentScore();
 
         //when
         courseService.applyCourse(courseApply);
 
         //then
-        //Nothing
+        long after = memberCourseRepository.count();
+        Integer afterCount = savedCourse.getCurrentCount();
+        Integer afterScore = savedMember.getCurrentScore();
 
+        //매핑테이블 갯수 1 증가
+        assertThat(after).isEqualTo(before+1);
+        //수강신청인원수는 1증가
+        assertThat(afterCount).isEqualTo(beforeCount+1);
+        // 현재학점은 강의학점만큼 증가
+        assertThat(afterScore).isEqualTo(beforeScore+savedCourse.getScore());
     }
 
 
@@ -190,6 +206,57 @@ class CourseServiceTest {
             courseService.applyCourse(courseApply);
         });
     }
+
+
+    /**
+     * mutilThread환경 테스트
+     */
+    @Test
+    @DisplayName("동시에 100개의 요청이 한개의 강의에 요청을 보내는 경우")
+    @Transactional
+    void current100request() throws Exception {
+        //given
+        Course savedCourse = courseRepository.save(createCourse());
+
+        int threadCount = 10;
+
+        // 고정된 쓰레드풀을 생성
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+
+        // CountDownLatch : 다른 스레드에서 수행중인 작업이 완료될 때 까지 대기해주는 객체
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        long memberCount = memberRepository.count();
+        long courseCount = courseRepository.count();
+
+        System.out.println("테스트코드 memberCount  = " + memberCount);
+        System.out.println("테스트코드 courseCount  = " + courseCount);
+
+        //when
+        for(int i = 0 ;i<threadCount; i++) {
+
+//            Member savedMember = memberRepository.save(createMember(i)); // username : hana0, hana1, hana2 ...
+//            CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+            CourseApply courseApply = CourseApply.of(savedCourse.getId(), "HANATEST"+i);
+
+            executorService.submit(() -> {
+                try {
+                    courseService.applyCourse(courseApply);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+                finally {
+                    latch.countDown();
+                }
+            });
+        }
+        latch.await();
+
+        //then
+        // ???
+    }
+
+
 
 
 //    @Test
@@ -250,11 +317,26 @@ class CourseServiceTest {
                 .build();
     }
 
+    private CourseCreate createCourseCreate() {
+        return CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30,CourseType.CC,3);
+    }
+
+
     private Member createMember() {
         return Member.builder()
                 .username("HANATEST111")
                 .password("123456")
                 .name("HANATEST111")
+                .maxScore(21)
+                .memberType(MemberType.STUDENT)
+                .build();
+    }
+
+    private Member createMember(int i) {
+        return Member.builder()
+                .username("HANATEST"+i)
+                .password("123456")
+                .name("HANATEST"+i)
                 .maxScore(21)
                 .memberType(MemberType.STUDENT)
                 .build();
