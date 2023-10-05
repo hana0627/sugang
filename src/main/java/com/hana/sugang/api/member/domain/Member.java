@@ -11,7 +11,6 @@ import org.hibernate.annotations.ColumnDefault;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
-@ToString
 public class Member  extends AuditingFields {
 
     @Id

@@ -6,6 +6,7 @@ import com.hana.sugang.api.course.domain.constant.CourseType;
 import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.repository.CourseRepository;
+import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
 import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.repository.MemberRepository;
@@ -42,6 +43,8 @@ class CourseControllerTest {
     private CourseRepository courseRepository;
     @Autowired
     private MemberRepository memberRepository;
+    @Autowired
+    private MemberCourseRepository memberCourseRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -53,6 +56,7 @@ class CourseControllerTest {
 
     @BeforeEach
     void before() {
+        memberCourseRepository.deleteAll();
 
         memberRepository.deleteAll();
         courseRepository.deleteAll();

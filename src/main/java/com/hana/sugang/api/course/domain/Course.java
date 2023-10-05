@@ -3,15 +3,18 @@ package com.hana.sugang.api.course.domain;
 
 import com.hana.sugang.api.course.domain.constant.CourseType;
 import com.hana.sugang.api.course.domain.constant.CourseTypeConverter;
+import com.hana.sugang.api.course.domain.mapping.MemberCourse;
 import com.hana.sugang.global.domain.AuditingFields;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@ToString
 public class Course extends AuditingFields {
 
     @Id
@@ -37,6 +40,10 @@ public class Course extends AuditingFields {
     private CourseType courseType; //교양, 전공여부
 
     private Integer score; // 학점
+
+
+    @OneToMany(mappedBy = "course")
+    private List<MemberCourse> memberCourses = new ArrayList<>();
 
 
     @Builder
