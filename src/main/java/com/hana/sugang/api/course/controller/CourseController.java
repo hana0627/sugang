@@ -2,6 +2,7 @@ package com.hana.sugang.api.course.controller;
 
 import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
+import com.hana.sugang.api.course.dto.request.CourseSearch;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.service.CourseService;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +20,8 @@ public class CourseController {
     private final CourseService courseService;
 
     @GetMapping("/courses")
-    public List<CourseResponse> courseList() {
-        return courseService.findCourses();
+    public List<CourseResponse> courseList(CourseSearch courseSearch) {
+        return courseService.findCourses(courseSearch);
     }
     @GetMapping("/course/{id}")
     public CourseResponse course(@PathVariable(name = "id") Long id) {

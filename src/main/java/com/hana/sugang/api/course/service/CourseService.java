@@ -4,6 +4,7 @@ import com.hana.sugang.api.course.domain.Course;
 import com.hana.sugang.api.course.domain.mapping.MemberCourse;
 import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
+import com.hana.sugang.api.course.dto.request.CourseSearch;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.repository.CourseRepository;
 import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
@@ -29,8 +30,9 @@ public class CourseService {
     private final MemberRepository memberRepository;
     private final MemberCourseRepository memberCourseRepository;
 
-    public List<CourseResponse> findCourses() {
-        return courseRepository.findAll()
+
+    public List<CourseResponse> findCourses(CourseSearch courseSearch) {
+        return courseRepository.getList(courseSearch)
                 .stream()
                 .map(CourseResponse::from)
                 .toList();
@@ -63,7 +65,6 @@ public class CourseService {
      */
     @Transactional
     public String applyCourse(CourseApply requestDto) {
-        System.out.println("[CourseService] applyCourse - called");
         Course course = courseRepository.findById(requestDto.courseId()).orElseThrow(CourseNotFoundException::new);
         Member member = memberRepository.findByUsername(requestDto.username()).orElseThrow(MemberNotFoundException::new);
 
@@ -84,35 +85,9 @@ public class CourseService {
         member.addCurrentScore(course.getScore());
         course.addCurrentCount();
 
-        System.out.println("[CourseService] applyCourse - end");
         return "수강신청 되었습니다.";
 
     }
-
-
-//    /**
-//     * 학생이 수강신청을 하는경우
-//     * @param memberCourseDto
-//     * @retur message
-//     */
-//    @Transactional
-//    public String applyCourse(MemberCourseDto memberCourseDto) {
-//        System.out.println("[CourseService] applyCourse - called");
-//        Course course = memberCourseDto.course();
-//        Member member = memberCourseDto.member();
-//
-//        // 강의신청
-//        MemberCourse memberCourse = MemberCourse.of(course, member);
-//        memberCourseRepository.save(memberCourse);
-//
-//        //신청학점 증가 및 신청인원증가
-//        member.addCurrentScore(course.getScore());
-//        course.addCurrentCount();
-//
-//        //현재 프로세스까지 아무런 문제가 없다면 수강신청 성공
-//        System.out.println("[CourseService] applyCourse - end");
-//        return "수강신청 되었습니다.";
-//    }
 
 
 }
