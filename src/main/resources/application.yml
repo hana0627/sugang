@@ -7,7 +7,10 @@ spring:
     show-sql: true
     open-in-view: false
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${MYSQL_URL}
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
+    hikari:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      maximum-pool-size: 50
+      max-lifetime: 30000
