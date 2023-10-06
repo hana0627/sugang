@@ -4,6 +4,7 @@ package com.hana.sugang.api.course.domain;
 import com.hana.sugang.api.course.domain.constant.CourseType;
 import com.hana.sugang.api.course.domain.constant.CourseTypeConverter;
 import com.hana.sugang.api.course.domain.mapping.MemberCourse;
+import com.hana.sugang.api.course.dto.request.CourseEdit;
 import com.hana.sugang.global.domain.AuditingFields;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,9 +13,12 @@ import org.hibernate.annotations.ColumnDefault;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.springframework.util.StringUtils.hasText;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString
 public class Course extends AuditingFields {
 
     @Id
@@ -89,5 +93,28 @@ public class Course extends AuditingFields {
         this.currentCount = this.maxCount;
     }
 
-
+    /**
+     * 상태변경 메소드
+     * 필드값이 null이면 기본값 유지, 그렇지않으면 변경
+     * @param requestDto
+     */
+    // TODO 빈값 체크를 위해 if문이 계속 붙어있다.
+    //  더 세련되게 처리할 수있을 것 같은데 생각이 잘 안남..
+    public void edit(CourseEdit requestDto) {
+        if (hasText(requestDto.title())) {
+            this.title = requestDto.title();
+        }
+        if (hasText(requestDto.description())) {
+            this.description = requestDto.description();
+        }
+        if (requestDto.maxCount() != null) {
+            this.maxCount = requestDto.maxCount();
+        }
+        if (requestDto.courseType() != null) {
+            this.courseType = requestDto.courseType();
+        }
+        if (requestDto.score() != null) {
+            this.score = requestDto.score();
+        }
+    }
 }

@@ -3,18 +3,20 @@ package com.hana.sugang.api.course.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hana.sugang.api.course.domain.Course;
 import com.hana.sugang.api.course.domain.constant.CourseType;
+import com.hana.sugang.api.course.domain.mapping.MemberCourse;
 import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
+import com.hana.sugang.api.course.dto.request.CourseEdit;
 import com.hana.sugang.api.course.repository.CourseRepository;
 import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
+import com.hana.sugang.api.course.service.CourseService;
 import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.repository.MemberRepository;
+import com.hana.sugang.global.exception.CourseNotFoundException;
+import jakarta.persistence.EntityManager;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,8 +32,7 @@ import java.util.regex.Matcher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -51,6 +53,8 @@ class CourseControllerTest {
     private MemberRepository memberRepository;
     @Autowired
     private MemberCourseRepository memberCourseRepository;
+    @Autowired
+    private EntityManager em;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -311,6 +315,143 @@ class CourseControllerTest {
 
     }
 
+    @Test
+    @DisplayName("강의정보 수정 성공케이스")
+    void editCourse() throws Exception {
+        //given
+        CourseCreate createCourse = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+        Course savedCourse = courseRepository.save(CourseCreate.toEntity(createCourse));
+
+        CourseEdit editCourse = CourseEdit.of("ZZZZ02", "테스트강의수정", 33, CourseType.GC, 2);
+        String json = objectMapper.writeValueAsString(editCourse);
+
+        //when & then
+        mvc.perform(patch("/course/"+savedCourse.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().isOk())
+                .andDo(print());
+
+        Course resultCourse = courseRepository.findById(savedCourse.getId()).orElseThrow(ClassNotFoundException::new);
+        assertThat(resultCourse.getTitle()).isEqualTo("ZZZZ02");
+        assertThat(resultCourse.getDescription()).isEqualTo("테스트강의수정");
+        assertThat(resultCourse.getMaxCount()).isEqualTo(33);
+        assertThat(resultCourse.getCourseType()).isEqualTo(CourseType.GC);
+        assertThat(resultCourse.getScore()).isEqualTo(2);
+
+    }
+
+    @Test
+    @DisplayName("강의정보 수정시 교양/전공 여부는 필수이다.")
+    void editCourseWithNoCourseType() throws Exception {
+        //given
+        CourseCreate createCourse = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+        Course savedCourse = courseRepository.save(CourseCreate.toEntity(createCourse));
+
+        CourseEdit editCourse = CourseEdit.of("ZZZZ02", "테스트강의수정", 33, null, 2);
+        String json = objectMapper.writeValueAsString(editCourse);
+
+        //when & then
+        mvc.perform(patch("/course/"+savedCourse.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(json)
+                )
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.validation.courseType").value("전공, 교양 여부를 선택해주세요."))
+                .andDo(print());
+    }
+
+    
+    @Test
+    @DisplayName("강의삭제 성공케이스")
+    @Transactional
+    void deleteCourse() throws Exception {
+        //given
+        CourseCreate createCourse = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+        Course savedCourse = courseRepository.save(CourseCreate.toEntity(createCourse));
+        long before = courseRepository.count();
+
+        //when & then
+        mvc.perform(delete("/course/"+savedCourse.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON))
+                .andDo(print());
+
+        long after = courseRepository.count();
+        assertThat(after).isEqualTo(before-1);
+
+        // 삭제한 강의로 조회시 예외발생
+        assertThrows(CourseNotFoundException.class, () -> {
+            courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
+        });
+    }
+
+    @Test
+    @DisplayName("강의삭제- 존재하지 않는강의 삭제시 아무일도 일어나지 않는다.")
+    @Transactional
+    void deleteCourseWithNoId() throws Exception {
+        //given
+        //Nothing
+
+        //when & then
+        mvc.perform(delete("/course/"+9999999))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("강의 삭제시 수강신청이 된 학생이 있는 경우.")
+    //TODO 서비스코드테스트 우선 작성 후 이후 상황에 맞추어 정리하기
+    void deleteCourseWithApplyStudent() throws Exception {
+        //given
+        CourseCreate createCourse = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+        Course course = CourseCreate.toEntity(createCourse);
+        Member member = createMember();
+
+        //수강신청 로직 수행
+        courseRepository.save(course);
+        memberRepository.save(member);
+        course.addCurrentCount();
+        member.addCurrentScore(course.getScore());
+        em.flush();
+
+        MemberCourse memberCourse = MemberCourse.of(course, member);
+        memberCourseRepository.save(memberCourse);
+
+        System.out.println("여기!!");
+        System.out.println(member.toString());
+        System.out.println(course.toString());
+        System.out.println(memberCourseRepository.count());
+        System.out.println("여기!!");
+
+
+        long before = courseRepository.count();
+
+        //when & then
+        mvc.perform(delete("/course/"+course.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON))
+                .andDo(print());
+
+
+        System.out.println("여기!!");
+        System.out.println(member.toString());
+        System.out.println(course.toString());
+        System.out.println(memberCourseRepository.count());
+        System.out.println("여기!!");
+
+
+        long after = courseRepository.count();
+        assertThat(after).isEqualTo(before-1);
+
+        // 삭제한 강의로 조회시 예외발생
+//        assertThrows(CourseNotFoundException.class, () -> {
+//            courseRepository.findById(course.getId()).orElseThrow(CourseNotFoundException::new);
+//        });
+    }
 
 
     @Test

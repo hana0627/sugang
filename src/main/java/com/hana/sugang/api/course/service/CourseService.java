@@ -4,6 +4,7 @@ import com.hana.sugang.api.course.domain.Course;
 import com.hana.sugang.api.course.domain.mapping.MemberCourse;
 import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
+import com.hana.sugang.api.course.dto.request.CourseEdit;
 import com.hana.sugang.api.course.dto.request.CourseSearch;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.repository.CourseRepository;
@@ -89,5 +90,46 @@ public class CourseService {
     }
 
 
+    /**
+     * 강의정보 수정 method
+     * @param id
+     * @param requestDto
+     * @return id
+     */
+    @Transactional
+    public Long editCourse(Long id, CourseEdit requestDto) {
+        Course course = courseRepository.findById(id).orElseThrow(CourseNotFoundException::new);
 
+        course.edit(requestDto);
+
+        return course.getId();
+    }
+
+    /**
+     * 강의정보 삭제 method
+     * @param id
+     */
+    //TODO 연관관계 생각.
+    // 강의만 지우면 안되고 연관된 학생정보도 수정이 되어야함
+    // TODO N+1 터짐. 이거 fetchJoin으로 해결가능
+    @Transactional
+    public void deleteCourse(Long id) {
+        System.out.println("[CourseService] - called");
+        Course course = courseRepository.findById(id).orElseThrow(CourseNotFoundException::new);
+        courseRepository.deleteById(id);
+
+        List<MemberCourse> memberCourses = memberCourseRepository.findAllByCourse(course);
+
+        memberCourses.forEach(e -> {
+            Member member = memberRepository.findById(e.getMember().getId()).orElseThrow(MemberNotFoundException::new);
+            memberCourseRepository.deleteById(e.getId());
+            member.decreaseCurrentScore(course.getScore());
+        });
+
+
+
+        System.out.println("[CourseService] - end");
+
+
+    }
 }

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-
+@Getter
 @Table(uniqueConstraints={
         // 두 필드가 동시에 같은 경우는 없음
         @UniqueConstraint(columnNames = {"course_id", "member_id"})
@@ -18,7 +18,6 @@ public class MemberCourse {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
