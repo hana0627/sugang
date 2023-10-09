@@ -9,12 +9,14 @@ import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.request.CourseEdit;
 import com.hana.sugang.api.course.repository.CourseRepository;
 import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
+import com.hana.sugang.api.course.repository.redis.CourseCountRepository;
 import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.repository.MemberRepository;
 import com.hana.sugang.global.exception.CourseNotFoundException;
 import jakarta.persistence.EntityManager;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,6 +52,8 @@ class CourseControllerTest {
     @Autowired
     private MemberCourseRepository memberCourseRepository;
     @Autowired
+    private CourseCountRepository courseCountRepository;
+    @Autowired
     private EntityManager em;
 
     @Autowired
@@ -64,6 +68,7 @@ class CourseControllerTest {
     void before() {
         memberRepository.deleteAll();
         courseRepository.deleteAll();
+        courseCountRepository.flushAll();
 //
 //        for(int i = 1; i <=20; i++) {
 //            if(i <10 && i %2 == 0) {
@@ -81,6 +86,13 @@ class CourseControllerTest {
 //        }
 
     }
+    @AfterEach
+    void after() {
+        memberRepository.deleteAll();
+        courseRepository.deleteAll();
+        courseCountRepository.flushAll();
+    }
+
     @Test
     @DisplayName("강의 전체조회 - 별도의 페이징 처리 없을시 1페이지, 최신순 25개를 보여준다.")
     void courseList() throws Exception {
@@ -489,6 +501,15 @@ class CourseControllerTest {
         Course savedCourse = courseRepository.save(CourseCreate.toEntity(requestDto));
         savedCourse.maxCurrentCountFORTEST();
 
+        /**
+         * redis환경테스트 추가 - RDB사용시 주석필요
+         */
+        for(int i = 0; i < savedCourse.getMaxCount(); i++) {
+            courseCountRepository.increment(savedCourse.getCode());
+        }
+
+        
+        
         Member savedMember = memberRepository.save(createMember());
 
         CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
