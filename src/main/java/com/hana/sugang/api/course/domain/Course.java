@@ -18,17 +18,13 @@ import static org.springframework.util.StringUtils.hasText;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@ToString
 public class Course extends AuditingFields {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-
     @Column(nullable = false, length = 50)
     private String code; // 교과목 코드
-
     @Column(nullable = false, length = 50)
     private String title; // 과목명
     @Column(length = 500)
@@ -37,15 +33,10 @@ public class Course extends AuditingFields {
     private Integer maxCount; // 최대 수강신청가능 인원 수
     @ColumnDefault("0")
     private Integer currentCount;// 현재 수강신청 인원 수
-
-
     @Convert(converter = CourseTypeConverter.class)
     @Column(nullable = false, length = 10)
     private CourseType courseType; //교양, 전공여부
-
     private Integer score; // 학점
-
-
     @OneToMany(mappedBy = "course", cascade = {CascadeType.ALL})
     private List<MemberCourse> memberCourses = new ArrayList<>();
 
