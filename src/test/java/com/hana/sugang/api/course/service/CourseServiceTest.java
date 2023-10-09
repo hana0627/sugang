@@ -205,42 +205,47 @@ class CourseServiceTest {
     void deleteCourseWithApplyStudent() {
         //given
         Course initCourse = courseRepository.save(createCourse());
-        Member initMember = memberRepository.save(createMember());
+        for(int i = 1 ; i<=25 ; i++) {
+            Member initMember = memberRepository.save(createMember(i));
+            initCourse.addCurrentCount();
+            initMember.addCurrentScore(initCourse.getScore());
+            Course savedCourse = courseRepository.save(initCourse);
+            Member savedMember = memberRepository.save(initMember);
+            MemberCourse memberCourse = MemberCourse.of(savedCourse, savedMember);
+            memberCourseRepository.save(memberCourse);
+        }
 
-        initCourse.addCurrentCount();
-        initMember.addCurrentScore(initCourse.getScore());
-        Course savedCourse = courseRepository.save(initCourse);
-        Member savedMember = memberRepository.save(initMember);
-        MemberCourse memberCourse = MemberCourse.of(savedCourse, savedMember);
-        memberCourseRepository.save(memberCourse);
-
-        long beforeMC = memberCourseRepository.count();
         long beforeCourseCount = courseRepository.count();
-        long beforeMemberCount = memberRepository.count();
+        long beforeMC = memberCourseRepository.count();
+        // 테스트데이터 검증 - start
+        assertThat(beforeCourseCount).isEqualTo(1); // 강의는 한건 생성
+        assertThat(beforeMC).isEqualTo(25); // 강의-학생 매핑은 25건 생성
+        List<Member> beforeMembers = memberRepository.findAll();
+        beforeMembers.forEach(
+                // 모든 학생의 신청학점은 강의의 학점과 동일
+                e-> assertThat(e.getCurrentScore()).isEqualTo(initCourse.getScore())
+        );
+        assertThat(initCourse.getScore()).isEqualTo(3);
+        // 테스트데이터 검증 - end
 
 
         //when
-        System.out.println("==여기==");
-        System.out.println(savedCourse.toString());
-        System.out.println(savedMember.toString());
-        System.out.println("==여기==");
+        courseService.deleteCourse(initCourse.getId());
 
-        courseService.deleteCourse(savedCourse.getId());
+        //then
         long afterMC = memberCourseRepository.count();
-
         long afterCourseCount = courseRepository.count();
-        System.out.println("afterCourseCount = " + afterCourseCount);
-        long afterMemberCount = memberRepository.count();
-
-        System.out.println("==여기2==");
-        System.out.println(savedCourse.toString());
-        System.out.println(savedMember.toString());
-        System.out.println("afterMC-beforeMC = " + (afterMC-beforeMC));
-        System.out.println("afterCourseCount-beforeCourseCount = " + (afterCourseCount-beforeCourseCount));
-        System.out.println("afterMemberCount-beforeMemberCount = " + (afterMemberCount-beforeMemberCount));
-        System.out.println("==여기2==");
-        
-        
+        List<Member> afterMembers = memberRepository.findAll();
+        afterMembers.forEach(e -> {
+            //학생 학점 초기화
+            assertThat(e.getCurrentScore()).isEqualTo(0);
+        });
+        // 학생수는 변함 없음
+        assertThat(afterMembers.size()).isEqualTo(25);
+        // 매핑테이블 삭제
+        assertThat(afterMC).isEqualTo(0);
+        // 강의테이블 삭제
+        assertThat(afterCourseCount).isEqualTo(0);
     }
 
 
@@ -282,7 +287,7 @@ class CourseServiceTest {
     void applyValidationTestWithMaxCount() {
         //given
         Course savedCourse = courseRepository.save(createCourse());
-        Member savedMember = memberRepository.save(createMember(22));
+        Member savedMember = memberRepository.save(createMember(99999));
         savedCourse.maxCurrentCountFORTEST();
 
         CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());

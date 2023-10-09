@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface MemberCourseRepositoryCustom {
 
-    List<MemberCourse> findAllByCourse(Course course);
+    void deleteAllByCourse (Course course);
 }

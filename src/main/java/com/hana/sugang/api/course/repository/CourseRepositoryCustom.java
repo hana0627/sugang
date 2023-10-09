@@ -10,4 +10,7 @@ public interface CourseRepositoryCustom {
     List<Course> getList(CourseSearch courseSearch);
 
     Optional<Course> findBYIdWithQuery(Long id);
+
+    Optional<Course> getCourseWithFetchJoin(Long id);
+
 }

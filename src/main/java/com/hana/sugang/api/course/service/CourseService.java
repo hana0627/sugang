@@ -14,12 +14,15 @@ import com.hana.sugang.api.member.repository.MemberRepository;
 import com.hana.sugang.global.exception.CourseNotFoundException;
 import com.hana.sugang.global.exception.MaxCountException;
 import com.hana.sugang.global.exception.MemberNotFoundException;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class CourseService {
     private final CourseRepository courseRepository;
     private final MemberRepository memberRepository;
     private final MemberCourseRepository memberCourseRepository;
+    private final EntityManager em;
 
 
     public List<CourseResponse> findCourses(CourseSearch courseSearch) {
@@ -62,6 +66,7 @@ public class CourseService {
     /**
      * 수강신청 가능한지 여부를 확인하고
      * 수강신청이 가능하면 수강신청
+     *
      * @param requestDto
      */
     @Transactional
@@ -92,6 +97,7 @@ public class CourseService {
 
     /**
      * 강의정보 수정 method
+     *
      * @param id
      * @param requestDto
      * @return id
@@ -109,27 +115,29 @@ public class CourseService {
      * 강의정보 삭제 method
      * @param id
      */
-    //TODO 연관관계 생각.
-    // 강의만 지우면 안되고 연관된 학생정보도 수정이 되어야함
-    // TODO N+1 터짐. 이거 fetchJoin으로 해결가능
     @Transactional
     public void deleteCourse(Long id) {
-        System.out.println("[CourseService] - called");
-        Course course = courseRepository.findById(id).orElseThrow(CourseNotFoundException::new);
-        courseRepository.deleteById(id);
+        // 강의 조회
+        Course course = courseRepository.getCourseWithFetchJoin(id).orElseThrow(CourseNotFoundException::new);
 
-        List<MemberCourse> memberCourses = memberCourseRepository.findAllByCourse(course);
-
-        memberCourses.forEach(e -> {
+        Set<Long> memberIds = new HashSet<>();
+        // 강의에 매핑된 리스트만큼 반복문 수행
+        course.getMemberCourses().forEach(e -> {
             Member member = memberRepository.findById(e.getMember().getId()).orElseThrow(MemberNotFoundException::new);
-            memberCourseRepository.deleteById(e.getId());
-            member.decreaseCurrentScore(course.getScore());
+            memberIds.add(member.getId());
         });
+        // 수강신청한 학생은 강의의 학점만큼 수강신청한 학점 감소
+        memberRepository.decreaseCurrentScore(memberIds, course.getScore());
+        em.flush();
+        em.clear();
 
+        // 매핑테이블 정보 삭제
+        memberCourseRepository.deleteAllByCourse(course);
+        em.flush();
+        em.clear();
 
-
-        System.out.println("[CourseService] - end");
-
-
+        // 강의삭제
+        courseRepository.deleteById(id);
     }
+
 }
