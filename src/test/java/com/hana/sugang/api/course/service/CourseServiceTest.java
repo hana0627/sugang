@@ -2,8 +2,10 @@ package com.hana.sugang.api.course.service;
 
 import com.hana.sugang.api.course.domain.Course;
 import com.hana.sugang.api.course.domain.constant.CourseType;
+import com.hana.sugang.api.course.domain.mapping.MemberCourse;
 import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
+import com.hana.sugang.api.course.dto.request.CourseEdit;
 import com.hana.sugang.api.course.dto.request.CourseSearch;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.repository.CourseRepository;
@@ -137,6 +139,116 @@ class CourseServiceTest {
         assertThat(after).isEqualTo(before+1);
 
     }
+    
+    
+    @Test
+    @DisplayName("강의 수정 성공케이스")
+    void editCourse() {
+        //given
+        Course savedCourse = courseRepository.save(createCourse());
+        CourseEdit courseEdit = createCourseEdit();
+
+        //when
+        //"테스트수정강의","설명입니다.수정.",33, courseType,2
+        courseService.editCourse(savedCourse.getId(), courseEdit);
+
+        //then
+        Course course = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
+
+        assertThat(course.getTitle()).isEqualTo("테스트수정강의");
+        assertThat(course.getDescription()).isEqualTo("설명입니다.수정.");
+        assertThat(course.getMaxCount()).isEqualTo(33);
+        assertThat(course.getCourseType()).isEqualTo(CourseType.CC);
+        assertThat(course.getScore()).isEqualTo(2);
+    }
+
+
+    @Test
+    @DisplayName("강의 수정- 제목이 공백이면 제목을 제외하고 수정된다.")
+    void editCourseWithNoTitle() {
+        //given
+        Course savedCourse = courseRepository.save(createCourse());
+        CourseEdit courseEdit = createCourseEditNoTitle();
+
+        //when
+        courseService.editCourse(savedCourse.getId(), courseEdit);
+
+        //then
+        Course course = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
+
+        assertThat(course.getTitle()).isEqualTo("테스트등록강의");
+        assertThat(course.getDescription()).isEqualTo("설명입니다.수정.");
+        assertThat(course.getMaxCount()).isEqualTo(33);
+        assertThat(course.getCourseType()).isEqualTo(CourseType.CC);
+        assertThat(course.getScore()).isEqualTo(2);
+    }
+
+
+    @Test
+    @DisplayName("강의 삭제 성공케이스")
+    void deleteCourse() {
+        //given
+        Course savedCourse = courseRepository.save(createCourse());
+        long before = courseRepository.count();
+
+        //when
+        courseService.deleteCourse(savedCourse.getId());
+
+        //then
+        long after = courseRepository.count();
+        assertThat(after).isEqualTo(before-1);
+        em.clear();
+    }
+    
+    @Test
+    @DisplayName("강의 삭제시 수강신청한 학생이 있는경우")
+    void deleteCourseWithApplyStudent() {
+        //given
+        Course initCourse = courseRepository.save(createCourse());
+        for(int i = 1 ; i<=25 ; i++) {
+            Member initMember = memberRepository.save(createMember(i));
+            initCourse.addCurrentCount();
+            initMember.addCurrentScore(initCourse.getScore());
+            Course savedCourse = courseRepository.save(initCourse);
+            Member savedMember = memberRepository.save(initMember);
+            MemberCourse memberCourse = MemberCourse.of(savedCourse, savedMember);
+            memberCourseRepository.save(memberCourse);
+        }
+
+        long beforeCourseCount = courseRepository.count();
+        long beforeMC = memberCourseRepository.count();
+        // 테스트데이터 검증 - start
+        assertThat(beforeCourseCount).isEqualTo(1); // 강의는 한건 생성
+        assertThat(beforeMC).isEqualTo(25); // 강의-학생 매핑은 25건 생성
+        List<Member> beforeMembers = memberRepository.findAll();
+        beforeMembers.forEach(
+                // 모든 학생의 신청학점은 강의의 학점과 동일
+                e-> assertThat(e.getCurrentScore()).isEqualTo(initCourse.getScore())
+        );
+        assertThat(initCourse.getScore()).isEqualTo(3);
+        // 테스트데이터 검증 - end
+
+
+        //when
+        courseService.deleteCourse(initCourse.getId());
+
+        //then
+        long afterMC = memberCourseRepository.count();
+        long afterCourseCount = courseRepository.count();
+        List<Member> afterMembers = memberRepository.findAll();
+        afterMembers.forEach(e -> {
+            //학생 학점 초기화
+            assertThat(e.getCurrentScore()).isEqualTo(0);
+        });
+        // 학생수는 변함 없음
+        assertThat(afterMembers.size()).isEqualTo(25);
+        // 매핑테이블 삭제
+        assertThat(afterMC).isEqualTo(0);
+        // 강의테이블 삭제
+        assertThat(afterCourseCount).isEqualTo(0);
+    }
+
+
 
     @Test
     @DisplayName("수강신청 성공케이스")
@@ -175,7 +287,7 @@ class CourseServiceTest {
     void applyValidationTestWithMaxCount() {
         //given
         Course savedCourse = courseRepository.save(createCourse());
-        Member savedMember = memberRepository.save(createMember(22));
+        Member savedMember = memberRepository.save(createMember(99999));
         savedCourse.maxCurrentCountFORTEST();
 
         CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
@@ -265,6 +377,14 @@ class CourseServiceTest {
 
     private CourseCreate createCourseCreate() {
         return CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30,CourseType.CC,3);
+    }
+
+    private CourseEdit createCourseEdit() {
+        return CourseEdit.of("테스트수정강의","설명입니다.수정.",33, CourseType.CC,2);
+    }
+
+    private CourseEdit createCourseEditNoTitle() {
+        return CourseEdit.of(null,"설명입니다.수정.",33, CourseType.CC,2);
     }
 
 

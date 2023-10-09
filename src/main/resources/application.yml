@@ -6,6 +6,9 @@ spring:
       ddl-auto: update
     show-sql: true
     open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 200
   datasource:
     url: ${MYSQL_URL}
     username: ${MYSQL_USERNAME}

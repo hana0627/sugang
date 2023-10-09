@@ -15,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
+@ToString
 public class Member  extends AuditingFields {
 
     @Id
@@ -83,6 +84,16 @@ public class Member  extends AuditingFields {
      */
     public void addCurrentScore(Integer score) {
         this.currentScore += score;
+    }
+
+
+    /**
+     * 수강취소 혹은 강의 삭제시
+     * 해당 강의의 학점만큼 신청한 학점 감소
+     * @param score
+     */
+    public void decreaseCurrentScore(Integer score) {
+        this.currentScore -= score;
     }
     
     
