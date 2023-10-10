@@ -1,4 +1,4 @@
-package com.hana.sugang.api.course.service;
+package com.hana.sugang.api.course.service.Impl;
 
 import com.hana.sugang.api.course.domain.Course;
 import com.hana.sugang.api.course.domain.constant.CourseType;
@@ -10,6 +10,7 @@ import com.hana.sugang.api.course.dto.request.CourseSearch;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.repository.CourseRepository;
 import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
+import com.hana.sugang.api.course.service.Impl.CourseRDBService;
 import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.repository.MemberRepository;
@@ -33,12 +34,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-@DisplayName("CourseService 테스트")
-class CourseServiceTest {
+@DisplayName("CourseService 테스트 - RDB")
+class CourseRDBServiceTest {
 
     @Autowired
-    private CourseService courseService;
-
+    private CourseRDBService courseRDBService;
     @Autowired
     private CourseRepository courseRepository;
     @Autowired
@@ -76,7 +76,7 @@ class CourseServiceTest {
 
         //when
         CourseSearch courseSearch = new CourseSearch(1,25);
-        List<CourseResponse> courses = courseService.findCourses(courseSearch);
+        List<CourseResponse> courses = courseRDBService.findCourses(courseSearch);
 
         //then
         assertThat(courses.size()).isEqualTo(25);
@@ -91,7 +91,7 @@ class CourseServiceTest {
         Course savedEntity = courseRepository.save(CourseCreate.toEntity(requestDto));
 
         //when
-        CourseResponse result = courseService.findOne(savedEntity.getId());
+        CourseResponse result = courseRDBService.findOne(savedEntity.getId());
 
         //then
         assertThat(result).isNotNull();
@@ -116,7 +116,7 @@ class CourseServiceTest {
 
         //when && then
         assertThrows(CourseNotFoundException.class, () -> {
-            courseService.findOne(9999L);
+            courseRDBService.findOne(9999L);
         });
 
 
@@ -131,7 +131,7 @@ class CourseServiceTest {
 
 
         //when
-        courseService.saveCourse(requestDto);
+        courseRDBService.saveCourse(requestDto);
 
 
         //then
@@ -150,7 +150,7 @@ class CourseServiceTest {
 
         //when
         //"테스트수정강의","설명입니다.수정.",33, courseType,2
-        courseService.editCourse(savedCourse.getId(), courseEdit);
+        courseRDBService.editCourse(savedCourse.getId(), courseEdit);
 
         //then
         Course course = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
@@ -171,7 +171,7 @@ class CourseServiceTest {
         CourseEdit courseEdit = createCourseEditNoTitle();
 
         //when
-        courseService.editCourse(savedCourse.getId(), courseEdit);
+        courseRDBService.editCourse(savedCourse.getId(), courseEdit);
 
         //then
         Course course = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
@@ -192,7 +192,7 @@ class CourseServiceTest {
         long before = courseRepository.count();
 
         //when
-        courseService.deleteCourse(savedCourse.getId());
+        courseRDBService.deleteCourse(savedCourse.getId());
 
         //then
         long after = courseRepository.count();
@@ -230,7 +230,7 @@ class CourseServiceTest {
 
 
         //when
-        courseService.deleteCourse(initCourse.getId());
+        courseRDBService.deleteCourse(initCourse.getId());
 
         //then
         long afterMC = memberCourseRepository.count();
@@ -263,7 +263,7 @@ class CourseServiceTest {
         Integer beforeScore = savedMember.getCurrentScore();
 
         //when
-        courseService.applyCourse(courseApply);
+        courseRDBService.applyCourse(courseApply);
 
         //then
         long after = memberCourseRepository.count();
@@ -294,7 +294,7 @@ class CourseServiceTest {
 
         //when & then
         assertThrows(MaxCountException.class, ()-> {
-            courseService.applyCourse(courseApply);
+            courseRDBService.applyCourse(courseApply);
         });
 
         em.clear();
@@ -315,7 +315,7 @@ class CourseServiceTest {
 
         //when & then
         assertThrows(MaxCountException.class, ()-> {
-            courseService.applyCourse(courseApply);
+            courseRDBService.applyCourse(courseApply);
         });
 
         em.clear();
@@ -339,7 +339,7 @@ class CourseServiceTest {
             CourseApply courseApply = CourseApply.of(savedCourse.getId(), "HANATEST" + i);
             executorService.submit(() -> {
                 try {
-                    courseService.applyCourse(courseApply);
+                    courseRDBService.applyCourse(courseApply);
                 }
                 finally {
                     latch.countDown();
