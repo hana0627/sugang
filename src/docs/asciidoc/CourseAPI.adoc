@@ -1,0 +1,116 @@
+= Course API
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 1
+:sectlinks:
+
+== 강의 단건 조회
+
+=== 요청
+
+include::{snippets}/findCourse/http-request.adoc[]
+
+include::{snippets}/findCourse/path-parameters.adoc[]
+
+=== 응답
+
+include::{snippets}/findCourse/http-response.adoc[]
+
+include::{snippets}/findCourse/response-fields.adoc[]
+
+
+=== Curl
+
+include::{snippets}/findCourse/curl-request.adoc[]
+
+== 강의 리스트 조회 - [PAGING] limit 1, size 10
+
+=== 요청
+
+include::{snippets}/courseList/http-request.adoc[]
+
+=== 응답
+
+include::{snippets}/courseList/http-response.adoc[]
+
+=== Curl
+
+include::{snippets}/courseList/curl-request.adoc[]
+
+
+== 강의 등록
+
+=== 요청
+
+include::{snippets}/createCourse/http-request.adoc[]
+
+include::{snippets}/createCourse/request-fields.adoc[]
+
+=== 응답
+
+include::{snippets}/createCourse/http-response.adoc[]
+
+include::{snippets}/createCourse/response-fields.adoc[]
+
+=== Curl
+
+include::{snippets}/createCourse/curl-request.adoc[]
+
+== 강의 삭제
+
+=== 요청
+
+include::{snippets}/deleteCourse/http-request.adoc[]
+
+include::{snippets}/deleteCourse/path-parameters.adoc[]
+
+=== 응답
+
+include::{snippets}/deleteCourse/http-response.adoc[]
+
+include::{snippets}/deleteCourse/response-fields.adoc[]
+
+=== Curl
+
+include::{snippets}/deleteCourse/curl-request.adoc[]
+
+== 강의 수정
+
+=== 요청
+
+include::{snippets}/editCourse/http-request.adoc[]
+
+include::{snippets}/editCourse/path-parameters.adoc[]
+
+include::{snippets}/editCourse/request-fields.adoc[]
+
+=== 응답
+
+include::{snippets}/editCourse/http-response.adoc[]
+
+include::{snippets}/editCourse/response-fields.adoc[]
+
+=== Curl
+
+include::{snippets}/editCourse/curl-request.adoc[]
+
+== 수강신청
+
+=== 요청
+
+include::{snippets}/applyCourse/http-request.adoc[]
+
+include::{snippets}/applyCourse/request-fields.adoc[]
+
+=== 응답
+
+include::{snippets}/applyCourse/http-response.adoc[]
+
+include::{snippets}/applyCourse/response-fields.adoc[]
+
+=== Curl
+
+include::{snippets}/applyCourse/curl-request.adoc[]
+

@@ -1,0 +1,60 @@
+= Course API
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 1
+:sectlinks:
+
+== 회원 단건 조회
+
+=== 요청
+
+include::{snippets}/findMember/http-request.adoc[]
+
+include::{snippets}/findMember/path-parameters.adoc[]
+
+=== 응답
+
+include::{snippets}/findMember/http-response.adoc[]
+
+include::{snippets}/findMember/response-fields.adoc[]
+
+
+=== Curl
+
+include::{snippets}/findMember/curl-request.adoc[]
+
+== 회원 전체 조회
+
+=== 요청
+
+include::{snippets}/findMember/http-request.adoc[]
+
+=== 응답
+
+include::{snippets}/findMember/http-response.adoc[]
+
+=== Curl
+
+include::{snippets}/findMember/curl-request.adoc[]
+
+
+== 회원 등록
+
+=== 요청
+
+include::{snippets}/createMember/http-request.adoc[]
+
+include::{snippets}/createMember/request-fields.adoc[]
+
+=== 응답
+
+include::{snippets}/createMember/http-response.adoc[]
+
+include::{snippets}/createMember/response-fields.adoc[]
+
+=== Curl
+
+include::{snippets}/createMember/curl-request.adoc[]
+
