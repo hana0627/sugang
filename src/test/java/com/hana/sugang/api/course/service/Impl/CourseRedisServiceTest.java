@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
-@DisplayName("CourseService 테스트")
+@DisplayName("CourseService 테스트 - REDIS")
 class CourseRedisServiceTest {
 
     @Autowired

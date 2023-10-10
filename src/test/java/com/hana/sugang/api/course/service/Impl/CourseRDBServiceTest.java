@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-@DisplayName("CourseService 테스트")
+@DisplayName("CourseService 테스트 - RDB")
 class CourseRDBServiceTest {
 
     @Autowired
