@@ -1,0 +1,59 @@
+= Course API
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 1
+:sectlinks:
+
+== 강의 단건 조회
+
+=== 요청
+
+include::{snippets}/findCourse/http-request.adoc[]
+
+include::{snippets}/findCourse/path-parameters.adoc[]
+
+=== 응답
+
+include::{snippets}/findCourse/http-response.adoc[]
+
+include::{snippets}/findCourse/response-fields.adoc[]
+
+
+=== Curl
+
+include::{snippets}/findCourse/curl-request.adoc[]
+
+== 강의 리스트 조회 - [PAGING] limit 1, size 10
+
+=== 요청
+
+include::{snippets}/courseList/http-request.adoc[]
+
+=== 응답
+
+include::{snippets}/courseList/http-response.adoc[]
+
+=== Curl
+
+include::{snippets}/courseList/curl-request.adoc[]
+
+
+== 강의 등록
+
+=== 요청
+
+include::{snippets}/createCourse/http-request.adoc[]
+
+include::{snippets}/createCourse/request-fields.adoc[]
+
+=== 응답
+
+include::{snippets}/createCourse/http-response.adoc[]
+
+include::{snippets}/createCourse/response-fields.adoc[]
+
+=== Curl
+
+include::{snippets}/createCourse/curl-request.adoc[]
