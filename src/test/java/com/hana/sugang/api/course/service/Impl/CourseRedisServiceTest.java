@@ -2,9 +2,12 @@ package com.hana.sugang.api.course.service.Impl;
 
 import com.hana.sugang.api.course.domain.Course;
 import com.hana.sugang.api.course.domain.constant.CourseType;
+import com.hana.sugang.api.course.domain.mapping.MemberCourse;
 import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.request.CourseEdit;
+import com.hana.sugang.api.course.dto.request.CourseSearch;
+import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.repository.CourseRepository;
 import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
 import com.hana.sugang.api.course.repository.redis.CourseCountRepository;
@@ -23,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -65,12 +69,207 @@ class CourseRedisServiceTest {
 
 
     @Test
+    @DisplayName("강의 첫번째 페이지 조회")
+    void findCourses() {
+        //given
+        for(int i = 1; i <=100; i++) {
+            if(i <10 && i %2 == 0) {
+                CourseCreate requestDto = CourseCreate.of("ABCD0"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.CC,3 );
+                courseRepository.save(requestDto.toEntity(requestDto));
+            }
+            else if(i <10) {
+                CourseCreate requestDto = CourseCreate.of("ABCD0"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.GC,3 );
+                courseRepository.save(requestDto.toEntity(requestDto));
+            }
+            else {
+                CourseCreate requestDto = CourseCreate.of("ABCD"+String.valueOf(i),"강의명"+i ,"설명입니다.",30, CourseType.CC,3 );
+                courseRepository.save(requestDto.toEntity(requestDto));
+            }
+        }
+
+        //when
+        CourseSearch courseSearch = new CourseSearch(1,25);
+        List<CourseResponse> courses = courseRedisService.findCourses(courseSearch);
+
+        //then
+        assertThat(courses.size()).isEqualTo(25);
+        assertThat(courses.get(0).title()).isEqualTo("강의명100");
+    }
+
+    @Test
+    @DisplayName("강의 한개 조회")
+    void findOne() {
+        //given
+        CourseCreate requestDto = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+        Course savedEntity = courseRepository.save(CourseCreate.toEntity(requestDto));
+
+        //when
+        CourseResponse result = courseRedisService.findOne(savedEntity.getId());
+
+        //then
+        assertThat(result).isNotNull();
+        assertThat(result.code()).isEqualTo("ZZZZ01");
+        assertThat(result.title()).isEqualTo("테스트등록강의");
+        assertThat(result.description()).isEqualTo("설명입니다.");
+        assertThat(result.maxCount()).isEqualTo(30);
+        assertThat(result.courseType()).isEqualTo(CourseType.CC);
+        assertThat(result.score()).isEqualTo(3);
+
+    }
+
+
+
+    @Test
+    @DisplayName("없는 Id로 조회하면 예외가 발생한다.")
+    void findOneError() {
+        //given
+        CourseCreate requestDto = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+        Course savedEntity = courseRepository.save(CourseCreate.toEntity(requestDto));
+
+
+        //when && then
+        assertThrows(CourseNotFoundException.class, () -> {
+            courseRedisService.findOne(9999L);
+        });
+
+
+    }
+
+    @Test
+    @DisplayName("강의등록")
+    void saveCourse() {
+        //given
+        long before = courseRepository.count();
+        CourseCreate requestDto = CourseCreate.of("ZZZZ01","테스트등록강의","설명입니다.",30, CourseType.CC,3 );
+
+
+        //when
+        courseRedisService.saveCourse(requestDto);
+
+
+        //then
+        long after = courseRepository.count();
+        assertThat(after).isEqualTo(before+1);
+
+    }
+
+
+    @Test
+    @DisplayName("강의 수정 성공케이스")
+    void editCourse() {
+        //given
+        Course savedCourse = courseRepository.save(createCourse());
+        CourseEdit courseEdit = createCourseEdit();
+
+        //when
+        //"테스트수정강의","설명입니다.수정.",33, courseType,2
+        courseRedisService.editCourse(savedCourse.getId(), courseEdit);
+
+        //then
+        Course course = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
+
+        assertThat(course.getTitle()).isEqualTo("테스트수정강의");
+        assertThat(course.getDescription()).isEqualTo("설명입니다.수정.");
+        assertThat(course.getMaxCount()).isEqualTo(33);
+        assertThat(course.getCourseType()).isEqualTo(CourseType.CC);
+        assertThat(course.getScore()).isEqualTo(2);
+    }
+
+
+    @Test
+    @DisplayName("강의 수정- 제목이 공백이면 제목을 제외하고 수정된다.")
+    void editCourseWithNoTitle() {
+        //given
+        Course savedCourse = courseRepository.save(createCourse());
+        CourseEdit courseEdit = createCourseEditNoTitle();
+
+        //when
+        courseRedisService.editCourse(savedCourse.getId(), courseEdit);
+
+        //then
+        Course course = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
+
+        assertThat(course.getTitle()).isEqualTo("테스트등록강의");
+        assertThat(course.getDescription()).isEqualTo("설명입니다.수정.");
+        assertThat(course.getMaxCount()).isEqualTo(33);
+        assertThat(course.getCourseType()).isEqualTo(CourseType.CC);
+        assertThat(course.getScore()).isEqualTo(2);
+    }
+
+
+    @Test
+    @DisplayName("강의 삭제 성공케이스")
+    void deleteCourse() {
+        //given
+        Course savedCourse = courseRepository.save(createCourse());
+        long before = courseRepository.count();
+
+        //when
+        courseRedisService.deleteCourse(savedCourse.getId());
+
+        //then
+        long after = courseRepository.count();
+        assertThat(after).isEqualTo(before-1);
+        em.clear();
+    }
+
+    @Test
+    @DisplayName("강의 삭제시 수강신청한 학생이 있는경우")
+    void deleteCourseWithApplyStudent() {
+        //given
+        Course initCourse = courseRepository.save(createCourse());
+        for(int i = 1 ; i<=25 ; i++) {
+            Member initMember = memberRepository.save(createMember(i));
+            initCourse.addCurrentCount();
+            initMember.addCurrentScore(initCourse.getScore());
+            Course savedCourse = courseRepository.save(initCourse);
+            Member savedMember = memberRepository.save(initMember);
+            MemberCourse memberCourse = MemberCourse.of(savedCourse, savedMember);
+            memberCourseRepository.save(memberCourse);
+        }
+
+        long beforeCourseCount = courseRepository.count();
+        long beforeMC = memberCourseRepository.count();
+        // 테스트데이터 검증 - start
+        assertThat(beforeCourseCount).isEqualTo(1); // 강의는 한건 생성
+        assertThat(beforeMC).isEqualTo(25); // 강의-학생 매핑은 25건 생성
+        List<Member> beforeMembers = memberRepository.findAll();
+        beforeMembers.forEach(
+                // 모든 학생의 신청학점은 강의의 학점과 동일
+                e-> assertThat(e.getCurrentScore()).isEqualTo(initCourse.getScore())
+        );
+        assertThat(initCourse.getScore()).isEqualTo(3);
+        // 테스트데이터 검증 - end
+
+
+        //when
+        courseRedisService.deleteCourse(initCourse.getId());
+
+        //then
+        long afterMC = memberCourseRepository.count();
+        long afterCourseCount = courseRepository.count();
+        List<Member> afterMembers = memberRepository.findAll();
+        afterMembers.forEach(e -> {
+            //학생 학점 초기화
+            assertThat(e.getCurrentScore()).isEqualTo(0);
+        });
+        // 학생수는 변함 없음
+        assertThat(afterMembers.size()).isEqualTo(25);
+        // 매핑테이블 삭제
+        assertThat(afterMC).isEqualTo(0);
+        // 강의테이블 삭제
+        assertThat(afterCourseCount).isEqualTo(0);
+    }
+
+
+
+    @Test
     @DisplayName("수강신청 성공케이스")
     void applyValidationTest() {
         //given
         Course savedCourse = courseRepository.save(createCourse());
         Member savedMember = memberRepository.save(createMember());
-        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(),savedCourse.getCode(),savedCourse.getMaxCount(), savedMember.getUsername());
 
         long before = memberCourseRepository.count();
         Integer beforeCount = savedCourse.getCurrentCount();
@@ -102,16 +301,11 @@ class CourseRedisServiceTest {
         //given
         Course savedCourse = courseRepository.save(createCourse());
         Member savedMember = memberRepository.save(createMember(99999));
-        savedCourse.maxCurrentCountFORTEST();
-
-
-        /**
-         * redis환경테스트 추가 - RDB사용시 주석필요
-         */
-        for(int i = 0; i < savedCourse.getMaxCount(); i++) {
+        for(int i = 0; i<savedCourse.getMaxCount(); i++) {
             courseCountRepository.increment(savedCourse.getCode());
         }
-        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(),savedCourse.getCode(),savedCourse.getMaxCount(), savedMember.getUsername());
 
         //when & then
         assertThrows(MaxCountException.class, ()-> {
@@ -131,7 +325,7 @@ class CourseRedisServiceTest {
         savedMember.MaxCurrentScoreFORTEST();
 
 
-        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(),savedCourse.getCode(),savedCourse.getMaxCount(), savedMember.getUsername());
 
 
         //when & then
@@ -147,9 +341,9 @@ class CourseRedisServiceTest {
      * mutilThread환경 테스트
      */
     @Test
-    @DisplayName("동시에 100개의 요청이 한개의 강의에 요청을 보내는 경우")
-    void current100request() throws Exception {
-        int threadCount = 100;
+    @DisplayName("동시에 500개의 요청이 한개의 강의에 요청을 보내는 경우")
+    void current500request() throws Exception {
+        int threadCount = 500;
         // 고정된 쓰레드풀을 생성
         ExecutorService executorService = Executors.newFixedThreadPool(32);
         CountDownLatch latch = new CountDownLatch(threadCount);
@@ -157,7 +351,7 @@ class CourseRedisServiceTest {
 
         for(int i = 0 ;i<threadCount; i++) {
             memberRepository.save(createMember(i));
-            CourseApply courseApply = CourseApply.of(savedCourse.getId(), "HANATEST" + i);
+            CourseApply courseApply = CourseApply.of(savedCourse.getId(),savedCourse.getCode(),savedCourse.getMaxCount(), "HANATEST"+i);
             executorService.submit(() -> {
                 try {
                     courseRedisService.applyCourse(courseApply);
@@ -168,7 +362,6 @@ class CourseRedisServiceTest {
             });
         }
         latch.await();
-
         //then
         Course findCourse = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
         // (현재 수강신청 인원수).isEqualTo(최대 수강가능 인원수)
@@ -176,6 +369,12 @@ class CourseRedisServiceTest {
 
         em.clear();// testData가 DB에 반영되는 현상이 있어서 강제초기화
     }
+
+
+
+    // 테스트 케이스 작성시 실수한점
+    // 필드값에 대한 유효성 검사는 Controller 호출 이전에 수행.
+    // Controller 호출 이전이므로 당연히 ServiceTest에서는 유효성 검증 테스트 불가
 
 
     private Course createCourse() {
@@ -221,4 +420,5 @@ class CourseRedisServiceTest {
                 .memberType(MemberType.STUDENT)
                 .build();
     }
+
 }

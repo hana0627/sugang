@@ -326,9 +326,9 @@ class CourseRDBServiceTest {
      * mutilThread환경 테스트
      */
     @Test
-    @DisplayName("동시에 100개의 요청이 한개의 강의에 요청을 보내는 경우")
-    void current100request() throws Exception {
-        int threadCount = 100;
+    @DisplayName("동시에 500개의 요청이 한개의 강의에 요청을 보내는 경우")
+    void current500request() throws Exception {
+        int threadCount = 500;
         // 고정된 쓰레드풀을 생성
         ExecutorService executorService = Executors.newFixedThreadPool(32);
         CountDownLatch latch = new CountDownLatch(threadCount);
@@ -346,9 +346,7 @@ class CourseRDBServiceTest {
                 }
             });
         }
-
         latch.await();
-
         //then
         Course findCourse = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
         // (현재 수강신청 인원수).isEqualTo(최대 수강가능 인원수)
