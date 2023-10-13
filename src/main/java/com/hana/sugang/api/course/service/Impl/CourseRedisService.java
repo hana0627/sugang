@@ -75,12 +75,22 @@ public class CourseRedisService implements CourseService {
      */
     @Transactional
     public String applyCourse(CourseApply requestDto) {
+
+
+        Long count = courseCountRepository.increment(requestDto.code());
+        //강의정원이 마감되는경우
+        if (count > requestDto.maxCount()) {
+            throw new MaxCountException("수강인원이 가득 찼습니다.");
+        }
+
+
         Course course = courseRepository.findBYIdWithQuery(requestDto.courseId()).orElseThrow(CourseNotFoundException::new);
         // 강의신청한 사람 count수 조회
-        Long count = courseCountRepository.increment(course.getCode());
-        System.out.println("안녕" + count);
-        //강의정원이 마감되는경우
-        if (count > course.getMaxCount()) {
+
+        // 데이터정합성 보장을 위한 메소드
+        // redis 사용시 ** DB호출전에 count를 조작하므로
+        // 악의적인 사용자가 이를 악용할 수 있다는 생각.
+        if(course.isFulled()) {
             throw new MaxCountException("수강인원이 가득 찼습니다.");
         }
 

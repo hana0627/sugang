@@ -476,7 +476,8 @@ class CourseControllerTest {
         Course savedCourse = courseRepository.save(CourseCreate.toEntity(requestDto));
         Member savedMember = memberRepository.save(createMember());
 
-        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(),savedCourse.getCode(),savedCourse.getMaxCount(), savedMember.getUsername());
+
 
         String json = objectMapper.writeValueAsString(courseApply);
 
@@ -512,7 +513,8 @@ class CourseControllerTest {
         
         Member savedMember = memberRepository.save(createMember());
 
-        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(),savedCourse.getCode(),savedCourse.getMaxCount(), savedMember.getUsername());
 
 
         String json = objectMapper.writeValueAsString(courseApply);
@@ -539,7 +541,7 @@ class CourseControllerTest {
         Member savedMember = memberRepository.save(createMember());
         savedMember.MaxCurrentScoreFORTEST();
 
-        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(),savedCourse.getCode(),savedCourse.getMaxCount(), savedMember.getUsername());
 
 
         String json = objectMapper.writeValueAsString(courseApply);
