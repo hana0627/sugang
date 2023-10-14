@@ -262,7 +262,7 @@ class CourseRDBServiceTest {
         Integer beforeScore = savedMember.getCurrentScore();
 
         //when
-        courseRDBService.applyCourse(courseApply);
+        courseRDBService.courseApply(courseApply);
 
         //then
         long after = memberCourseRepository.count();
@@ -293,7 +293,7 @@ class CourseRDBServiceTest {
 
         //when & then
         assertThrows(MaxCountException.class, ()-> {
-            courseRDBService.applyCourse(courseApply);
+            courseRDBService.courseApply(courseApply);
         });
 
         em.clear();
@@ -314,7 +314,7 @@ class CourseRDBServiceTest {
 
         //when & then
         assertThrows(MaxCountException.class, ()-> {
-            courseRDBService.applyCourse(courseApply);
+            courseRDBService.courseApply(courseApply);
         });
 
         em.clear();
@@ -338,7 +338,7 @@ class CourseRDBServiceTest {
             CourseApply courseApply = CourseApply.of(savedCourse.getId(), "HANATEST" + i);
             executorService.submit(() -> {
                 try {
-                    courseRDBService.applyCourse(courseApply);
+                    courseRDBService.courseApply(courseApply);
                 }
                 finally {
                     latch.countDown();

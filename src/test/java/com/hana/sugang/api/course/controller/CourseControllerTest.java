@@ -55,7 +55,6 @@ class CourseControllerTest {
     private CourseCountRepository courseCountRepository;
     @Autowired
     private EntityManager em;
-
     @Autowired
     private ObjectMapper objectMapper;
 

@@ -12,7 +12,7 @@ public interface CourseService {
     List<CourseResponse> findCourses(CourseSearch courseSearch);
     CourseResponse findOne(Long id);
     Long saveCourse(CourseCreate requestDto);
-    String applyCourse(CourseApply requestDto);
+    String courseApply(CourseApply requestDto);
     Long editCourse(Long id, CourseEdit requestDto);
     void deleteCourse(Long id);
 }

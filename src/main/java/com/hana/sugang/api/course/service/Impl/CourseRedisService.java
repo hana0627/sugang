@@ -1,12 +1,12 @@
 package com.hana.sugang.api.course.service.Impl;
 
 import com.hana.sugang.api.course.domain.Course;
-import com.hana.sugang.api.course.domain.mapping.MemberCourse;
 import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.request.CourseEdit;
 import com.hana.sugang.api.course.dto.request.CourseSearch;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
+import com.hana.sugang.api.course.kafka.producer.CourseApplyProducer;
 import com.hana.sugang.api.course.repository.CourseRepository;
 import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
 import com.hana.sugang.api.course.repository.redis.CourseCountRepository;
@@ -17,10 +17,8 @@ import com.hana.sugang.global.exception.CourseNotFoundException;
 import com.hana.sugang.global.exception.MaxCountException;
 import com.hana.sugang.global.exception.MemberNotFoundException;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +36,11 @@ public class CourseRedisService implements CourseService {
     private final MemberCourseRepository memberCourseRepository;
     private final CourseCountRepository courseCountRepository;
     private final EntityManager em;
+
+    /**
+     * kafka 도입으로 인한 추가
+     */
+    private final CourseApplyProducer courseApplyProducer;
 
 
     public List<CourseResponse> findCourses(CourseSearch courseSearch) {
@@ -70,13 +73,11 @@ public class CourseRedisService implements CourseService {
     /**
      * 수강신청 가능한지 여부를 확인하고
      * 수강신청이 가능하면 수강신청
-     *
      * @param requestDto
-     *
+     * Kafka 도입메소드 - 수강신청 validation만 처리
      * redis 추가 - singleThread로 작업을 유도
      */
-    @Transactional
-    public String applyCourse(CourseApply requestDto) {
+    public String courseApply(CourseApply requestDto) {
 
         Long count = courseCountRepository.increment(requestDto.code());
         //강의정원이 마감되는경우
@@ -98,17 +99,20 @@ public class CourseRedisService implements CourseService {
         if (member.isMaxScore(course.getScore())) {
             throw new MaxCountException("신청할 수 있는 학점을 초과했습니다.");
         }
-
-        MemberCourse memberCourse = MemberCourse.of(course, member);
-        memberCourseRepository.save(memberCourse);
-
-        //더티체킹에의해 트랜잭션 종료시 Update
-        member.addCurrentScore(course.getScore());
-        course.addCurrentCount();
+        courseApplyProducer.create(course.getCode(), member.getUsername());
         return "수강신청 되었습니다.";
-
     }
 
+    /**
+     * 수강신청을 하는 메소드
+     */
+//    @Transactional
+//    public Map<String,String> applyCourse(String courseCode, String username) {
+//        Map<String, String> map = new HashMap<>();
+//
+//        map.put("status","200");
+//        return map;
+//    }
 
     /**
      * 강의정보 수정 method

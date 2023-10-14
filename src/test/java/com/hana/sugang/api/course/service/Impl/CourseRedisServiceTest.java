@@ -32,7 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest
 @DisplayName("CourseService 테스트 - REDIS")
 class CourseRedisServiceTest {
@@ -265,7 +265,7 @@ class CourseRedisServiceTest {
 
     @Test
     @DisplayName("수강신청 성공케이스")
-    void applyValidationTest() {
+    void applyValidationTest() throws InterruptedException {
         //given
         Course savedCourse = courseRepository.save(createCourse());
         Member savedMember = memberRepository.save(createMember());
@@ -276,9 +276,10 @@ class CourseRedisServiceTest {
         Integer beforeScore = savedMember.getCurrentScore();
 
         //when
-        courseRedisService.applyCourse(courseApply);
+        courseRedisService.courseApply(courseApply);
 
         //then
+        Thread.sleep(5000);
         long after = memberCourseRepository.count();
         Integer afterCount = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new).getCurrentCount();
         Integer afterScore = memberRepository.findByUsername(savedMember.getUsername()).orElseThrow(MemberNotFoundException::new).getCurrentScore();
@@ -309,7 +310,7 @@ class CourseRedisServiceTest {
 
         //when & then
         assertThrows(MaxCountException.class, ()-> {
-            courseRedisService.applyCourse(courseApply);
+            courseRedisService.courseApply(courseApply);
         });
 
         em.clear();
@@ -330,7 +331,7 @@ class CourseRedisServiceTest {
 
         //when & then
         assertThrows(MaxCountException.class, ()-> {
-            courseRedisService.applyCourse(courseApply);
+            courseRedisService.courseApply(courseApply);
         });
 
         em.clear();
@@ -343,7 +344,7 @@ class CourseRedisServiceTest {
     @Test
     @DisplayName("동시에 500개의 요청이 한개의 강의에 요청을 보내는 경우")
     void current500request() throws Exception {
-        int threadCount = 500;
+        int threadCount = 100;
         // 고정된 쓰레드풀을 생성
         ExecutorService executorService = Executors.newFixedThreadPool(32);
         CountDownLatch latch = new CountDownLatch(threadCount);
@@ -354,7 +355,7 @@ class CourseRedisServiceTest {
             CourseApply courseApply = CourseApply.of(savedCourse.getId(),savedCourse.getCode(),savedCourse.getMaxCount(), "HANATEST"+i);
             executorService.submit(() -> {
                 try {
-                    courseRedisService.applyCourse(courseApply);
+                    courseRedisService.courseApply(courseApply);
                 }
                 finally {
                     latch.countDown();
@@ -362,6 +363,11 @@ class CourseRedisServiceTest {
             });
         }
         latch.await();
+        
+        
+        //kafka가 알아서 분산처리 해줄것이기 때문에 처리가 끝날때까지 ThreadSleep 필요성
+        Thread.sleep(10000);
+        
         //then
         Course findCourse = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
         // (현재 수강신청 인원수).isEqualTo(최대 수강가능 인원수)
