@@ -13,4 +13,5 @@ public interface CourseRepositoryCustom {
 
     Optional<Course> getCourseWithFetchJoin(Long id);
 
+    Optional<Course> findByIdRedis(Long id);
 }

@@ -37,4 +37,13 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
                 .set(member.currentScore, subtractedScore)
                 .where(member.id.in(ids)).execute();
     }
+
+    @Override
+    public Optional<Member> findByUsernameRedis(String username) {
+        return Optional.ofNullable(queryFactory.select(member)
+                .from(member)
+                .where(member.username.eq(username))
+                .setLockMode(LockModeType.NONE)
+                .fetchOne());
+    }
 }

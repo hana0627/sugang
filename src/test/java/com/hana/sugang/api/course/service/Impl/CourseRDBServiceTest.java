@@ -10,7 +10,6 @@ import com.hana.sugang.api.course.dto.request.CourseSearch;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.repository.CourseRepository;
 import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
-import com.hana.sugang.api.course.service.Impl.CourseRDBService;
 import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.repository.MemberRepository;

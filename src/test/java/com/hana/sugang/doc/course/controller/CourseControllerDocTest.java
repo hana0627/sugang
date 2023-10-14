@@ -271,7 +271,7 @@ public class CourseControllerDocTest {
         Course savedCourse = courseRepository.save(CourseCreate.toEntity(requestDto));
         Member savedMember = memberRepository.save(createMember());
 
-        CourseApply courseApply = CourseApply.of(savedCourse.getId(), savedMember.getUsername());
+        CourseApply courseApply = CourseApply.of(savedCourse.getId(),savedCourse.getCode(),savedCourse.getMaxCount(), savedMember.getUsername());
 
         String json = objectMapper.writeValueAsString(courseApply);
 
@@ -286,6 +286,7 @@ public class CourseControllerDocTest {
                 .andDo(document("applyCourse",
                         requestFields(
                                 fieldWithPath("courseId").description("강의Id"),
+                                fieldWithPath("maxCount").description("수강정원"),
                                 fieldWithPath("code").description("강의코드").optional(),
                                 fieldWithPath("memberId").description("회원Id").optional(),
                                 fieldWithPath("username").description("회원코드")

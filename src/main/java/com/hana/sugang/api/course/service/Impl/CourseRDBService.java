@@ -73,16 +73,17 @@ public class CourseRDBService implements CourseService {
     @Transactional
     public String applyCourse(CourseApply requestDto) {
         Course course = courseRepository.findBYIdWithQuery(requestDto.courseId()).orElseThrow(CourseNotFoundException::new);
-        Member member = memberRepository.findBYUsernameWithQuery(requestDto.username()).orElseThrow(MemberNotFoundException::new);
+        //강의정원이 마감되는경우
+        if (course.isFulled()) {
+            throw new MaxCountException("수강인원이 가득 찼습니다.");
+        }
+
+        Member member = memberRepository.findByUsername(requestDto.username()).orElseThrow(MemberNotFoundException::new);
         // 학생이 신청가능학점을 초과해서 신청하는경우
         if (member.isMaxScore(course.getScore())) {
             throw new MaxCountException("신청할 수 있는 학점을 초과했습니다.");
         }
 
-        //강의정원이 마감되는경우
-        if (course.isFulled()) {
-            throw new MaxCountException("수강인원이 가득 찼습니다.");
-        }
         MemberCourse memberCourse = MemberCourse.of(course, member);
         memberCourseRepository.save(memberCourse);
 
