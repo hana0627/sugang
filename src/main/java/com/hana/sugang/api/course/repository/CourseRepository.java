@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface CourseRepository extends JpaRepository<Course, Long>, CourseRepositoryCustom {
     @Lock(LockModeType.NONE)
     Optional<Course> findById(Long courseId);
+
+    Optional<Course> findByCode(String code);
 }

@@ -65,13 +65,11 @@ public class CourseRDBService implements CourseService {
 
 
     /**
-     * 수강신청 가능한지 여부를 확인하고
-     * 수강신청이 가능하면 수강신청
-     *
-     * @param requestDto
+     * 수강가능여부 확인
+     * 현재 RDB버전은 별도구현 하지 않았음.
      */
     @Transactional
-    public String applyCourse(CourseApply requestDto) {
+    public String courseApply(CourseApply requestDto) {
         Course course = courseRepository.findBYIdWithQuery(requestDto.courseId()).orElseThrow(CourseNotFoundException::new);
         //강의정원이 마감되는경우
         if (course.isFulled()) {
@@ -84,14 +82,22 @@ public class CourseRDBService implements CourseService {
             throw new MaxCountException("신청할 수 있는 학점을 초과했습니다.");
         }
 
+        applyCourseEntity(course, member);
+
+        return "수강신청 되었습니다.";
+    }
+
+    /**
+     * 강의등록처리
+     */
+    @Transactional
+    public void applyCourseEntity(Course course, Member member) {
         MemberCourse memberCourse = MemberCourse.of(course, member);
         memberCourseRepository.save(memberCourse);
 
         //더티체킹에의해 트랜잭션 종료시 Update
         member.addCurrentScore(course.getScore());
         course.addCurrentCount();
-        return "수강신청 되었습니다.";
-
     }
 
 

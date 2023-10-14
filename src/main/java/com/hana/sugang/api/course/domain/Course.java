@@ -23,7 +23,7 @@ public class Course extends AuditingFields {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 50, unique = true)
     private String code; // 교과목 코드
     @Column(nullable = false, length = 50)
     private String title; // 과목명

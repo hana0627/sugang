@@ -65,7 +65,7 @@ public class CourseController {
         Map<String, String> map = new HashMap<>();
 
         // 수강신청
-        String message = courseService.applyCourse(requestDto);
+        String message = courseService.courseApply(requestDto);
 
         map.put("message",message);
 
