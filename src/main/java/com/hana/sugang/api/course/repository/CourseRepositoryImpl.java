@@ -50,4 +50,13 @@ public class CourseRepositoryImpl implements CourseRepositoryCustom {
                 .fetchOne());
     }
 
+    @Override
+    public Optional<Course> findByIdRedis(Long id) {
+        return Optional.ofNullable(queryFactory.select(course)
+                .from(course)
+                .where(course.id.eq(id))
+                .setLockMode(LockModeType.NONE)
+                .fetchOne());
+    }
+
 }

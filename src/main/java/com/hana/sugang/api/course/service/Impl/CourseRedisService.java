@@ -17,8 +17,10 @@ import com.hana.sugang.global.exception.CourseNotFoundException;
 import com.hana.sugang.global.exception.MaxCountException;
 import com.hana.sugang.global.exception.MemberNotFoundException;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,12 +72,11 @@ public class CourseRedisService implements CourseService {
      * 수강신청이 가능하면 수강신청
      *
      * @param requestDto
-     * 
+     *
      * redis 추가 - singleThread로 작업을 유도
      */
     @Transactional
     public String applyCourse(CourseApply requestDto) {
-
 
         Long count = courseCountRepository.increment(requestDto.code());
         //강의정원이 마감되는경우
@@ -83,10 +84,8 @@ public class CourseRedisService implements CourseService {
             throw new MaxCountException("수강인원이 가득 찼습니다.");
         }
 
-
-        Course course = courseRepository.findBYIdWithQuery(requestDto.courseId()).orElseThrow(CourseNotFoundException::new);
+        Course course = courseRepository.findByIdRedis(requestDto.courseId()).orElseThrow(CourseNotFoundException::new);
         // 강의신청한 사람 count수 조회
-
         // 데이터정합성 보장을 위한 메소드
         // redis 사용시 ** DB호출전에 count를 조작하므로
         // 악의적인 사용자가 이를 악용할 수 있다는 생각.
@@ -94,7 +93,7 @@ public class CourseRedisService implements CourseService {
             throw new MaxCountException("수강인원이 가득 찼습니다.");
         }
 
-        Member member = memberRepository.findBYUsernameWithQuery(requestDto.username()).orElseThrow(MemberNotFoundException::new);
+        Member member = memberRepository.findByUsername(requestDto.username()).orElseThrow(MemberNotFoundException::new);
         // 학생이 신청가능학점을 초과해서 신청하는경우
         if (member.isMaxScore(course.getScore())) {
             throw new MaxCountException("신청할 수 있는 학점을 초과했습니다.");
