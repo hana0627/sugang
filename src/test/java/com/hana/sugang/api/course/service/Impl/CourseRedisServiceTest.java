@@ -10,7 +10,7 @@ import com.hana.sugang.api.course.dto.request.CourseSearch;
 import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.repository.CourseRepository;
 import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
-import com.hana.sugang.api.course.repository.redis.CourseCountRepository;
+import com.hana.sugang.api.course.repository.redis.CourseRedisRepository;
 import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.repository.MemberRepository;
@@ -48,21 +48,21 @@ class CourseRedisServiceTest {
     private MemberCourseRepository memberCourseRepository;
 
     @Autowired
-    private CourseCountRepository courseCountRepository;
+    private CourseRedisRepository courseRedisRepository;
 
     @Autowired
     private EntityManager em;
 
     @BeforeEach
     void before() {
-        courseCountRepository.flushAll();
+        courseRedisRepository.flushAll();
         memberRepository.deleteAll();
         courseRepository.deleteAll();
     }
 
     @AfterEach
     void after() {
-        courseCountRepository.flushAll();
+        courseRedisRepository.flushAll();
         memberRepository.deleteAll();
         courseRepository.deleteAll();
     }
@@ -303,7 +303,7 @@ class CourseRedisServiceTest {
         Course savedCourse = courseRepository.save(createCourse());
         Member savedMember = memberRepository.save(createMember(99999));
         for(int i = 0; i<savedCourse.getMaxCount(); i++) {
-            courseCountRepository.increment(savedCourse.getCode());
+            courseRedisRepository.increment(savedCourse.getCode());
         }
 
         CourseApply courseApply = CourseApply.of(savedCourse.getId(),savedCourse.getCode(),savedCourse.getMaxCount(), savedMember.getUsername());
@@ -344,7 +344,7 @@ class CourseRedisServiceTest {
     @Test
     @DisplayName("동시에 500개의 요청이 한개의 강의에 요청을 보내는 경우")
     void current500request() throws Exception {
-        int threadCount = 100;
+        int threadCount = 500;
         // 고정된 쓰레드풀을 생성
         ExecutorService executorService = Executors.newFixedThreadPool(32);
         CountDownLatch latch = new CountDownLatch(threadCount);
@@ -363,11 +363,11 @@ class CourseRedisServiceTest {
             });
         }
         latch.await();
-        
-        
+
+
         //kafka가 알아서 분산처리 해줄것이기 때문에 처리가 끝날때까지 ThreadSleep 필요성
         Thread.sleep(10000);
-        
+
         //then
         Course findCourse = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
         // (현재 수강신청 인원수).isEqualTo(최대 수강가능 인원수)

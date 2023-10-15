@@ -138,8 +138,8 @@ class CourseRDBServiceTest {
         assertThat(after).isEqualTo(before+1);
 
     }
-    
-    
+
+
     @Test
     @DisplayName("강의 수정 성공케이스")
     void editCourse() {
@@ -198,7 +198,7 @@ class CourseRDBServiceTest {
         assertThat(after).isEqualTo(before-1);
         em.clear();
     }
-    
+
     @Test
     @DisplayName("강의 삭제시 수강신청한 학생이 있는경우")
     void deleteCourseWithApplyStudent() {
@@ -350,7 +350,7 @@ class CourseRDBServiceTest {
         Course findCourse = courseRepository.findById(savedCourse.getId()).orElseThrow(CourseNotFoundException::new);
         // (현재 수강신청 인원수).isEqualTo(최대 수강가능 인원수)
         assertThat(findCourse.getCurrentCount()).isEqualTo(findCourse.getMaxCount());
-        
+
         em.clear();// testData가 DB에 반영되는 현상이 있어서 강제초기화
     }
 

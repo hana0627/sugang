@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class CourseCountRepository {
+public class CourseRedisRepository {
 
     private final RedisTemplate<String, String> redisTemplate;
 

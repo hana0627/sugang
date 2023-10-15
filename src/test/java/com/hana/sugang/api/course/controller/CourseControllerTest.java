@@ -9,7 +9,7 @@ import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.request.CourseEdit;
 import com.hana.sugang.api.course.repository.CourseRepository;
 import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
-import com.hana.sugang.api.course.repository.redis.CourseCountRepository;
+import com.hana.sugang.api.course.repository.redis.CourseRedisRepository;
 import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.repository.MemberRepository;
@@ -52,7 +52,7 @@ class CourseControllerTest {
     @Autowired
     private MemberCourseRepository memberCourseRepository;
     @Autowired
-    private CourseCountRepository courseCountRepository;
+    private CourseRedisRepository courseRedisRepository;
     @Autowired
     private EntityManager em;
     @Autowired
@@ -67,7 +67,7 @@ class CourseControllerTest {
     void before() {
         memberRepository.deleteAll();
         courseRepository.deleteAll();
-        courseCountRepository.flushAll();
+        courseRedisRepository.flushAll();
 //
 //        for(int i = 1; i <=20; i++) {
 //            if(i <10 && i %2 == 0) {
@@ -89,7 +89,7 @@ class CourseControllerTest {
     void after() {
         memberRepository.deleteAll();
         courseRepository.deleteAll();
-        courseCountRepository.flushAll();
+        courseRedisRepository.flushAll();
     }
 
     @Test
@@ -505,7 +505,7 @@ class CourseControllerTest {
          * redis환경테스트 추가 - RDB사용시 주석필요
          */
         for(int i = 0; i < savedCourse.getMaxCount(); i++) {
-            courseCountRepository.increment(savedCourse.getCode());
+            courseRedisRepository.increment(savedCourse.getCode());
         }
 
         
