@@ -7,7 +7,7 @@ import com.hana.sugang.api.course.dto.request.CourseApply;
 import com.hana.sugang.api.course.dto.request.CourseCreate;
 import com.hana.sugang.api.course.dto.request.CourseEdit;
 import com.hana.sugang.api.course.repository.CourseRepository;
-import com.hana.sugang.api.course.repository.redis.CourseCountRepository;
+import com.hana.sugang.api.course.repository.redis.CourseRedisRepository;
 import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.domain.constant.MemberType;
 import com.hana.sugang.api.member.repository.MemberRepository;
@@ -55,7 +55,7 @@ public class CourseControllerDocTest {
     @Autowired
     private CourseRepository courseRepository;
     @Autowired
-    private CourseCountRepository courseCountRepository;
+    private CourseRedisRepository courseRedisRepository;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -64,7 +64,7 @@ public class CourseControllerDocTest {
     void before() {
         memberRepository.deleteAll();
         courseRepository.deleteAll();
-        courseCountRepository.flushAll();
+        courseRedisRepository.flushAll();
         //RESTDoc에 알맞는 설정을 MockMvc에 추가
 //    void setUp(WebApplicationContext webApplicationContext, RestDocumentationContextProvider restDocumentation) {
 //        this.mvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
@@ -76,7 +76,7 @@ public class CourseControllerDocTest {
     void after() {
         memberRepository.deleteAll();
         courseRepository.deleteAll();
-        courseCountRepository.flushAll();
+        courseRedisRepository.flushAll();
     }
 
 

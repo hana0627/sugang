@@ -9,7 +9,7 @@ import com.hana.sugang.api.course.dto.response.CourseResponse;
 import com.hana.sugang.api.course.kafka.producer.CourseApplyProducer;
 import com.hana.sugang.api.course.repository.CourseRepository;
 import com.hana.sugang.api.course.repository.mapping.MemberCourseRepository;
-import com.hana.sugang.api.course.repository.redis.CourseCountRepository;
+import com.hana.sugang.api.course.repository.redis.CourseRedisRepository;
 import com.hana.sugang.api.course.service.CourseService;
 import com.hana.sugang.api.member.domain.Member;
 import com.hana.sugang.api.member.repository.MemberRepository;
@@ -34,7 +34,7 @@ public class CourseRedisService implements CourseService {
     private final CourseRepository courseRepository;
     private final MemberRepository memberRepository;
     private final MemberCourseRepository memberCourseRepository;
-    private final CourseCountRepository courseCountRepository;
+    private final CourseRedisRepository courseRedisRepository;
     private final EntityManager em;
 
     /**
@@ -74,12 +74,12 @@ public class CourseRedisService implements CourseService {
      * 수강신청 가능한지 여부를 확인하고
      * 수강신청이 가능하면 수강신청
      * @param requestDto
-     * Kafka 도입메소드 - 수강신청 validation만 처리
-     * redis 추가 - singleThread로 작업을 유도
+     * Kafka 도입 - 수강신청 validation만 처리
+     * redis 추가 - Lock 해제, singleThread로 작업을 유도
      */
     public String courseApply(CourseApply requestDto) {
 
-        Long count = courseCountRepository.increment(requestDto.code());
+        Long count = courseRedisRepository.increment(requestDto.code());
         //강의정원이 마감되는경우
         if (count > requestDto.maxCount()) {
             throw new MaxCountException("수강인원이 가득 찼습니다.");
